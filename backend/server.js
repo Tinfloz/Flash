@@ -6,6 +6,6 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 9001;
 
-//middlewares
 app.use(express.json());
 
+// new stuff
