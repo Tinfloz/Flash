@@ -6,6 +6,18 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 9001;
 
+//middlewares
 app.use(express.json());
+app.use(cors());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
-// new stuff
+//test endpoint
+app.get('/', (req, res) => {
+    res.json({
+        message: "hello world"
+    });
+});
+
+//listener
+app.listen(port, () => `listening on ${port}`);
