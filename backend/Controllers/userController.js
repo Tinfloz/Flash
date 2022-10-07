@@ -67,10 +67,14 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const getUser = asyncHandler(async (req, res) => {
-
+    res.json({
+        success: true,
+        message: "welcome"
+    })
 })
 
 export {
     registerUser,
-    loginUser
+    loginUser,
+    getUser
 }
