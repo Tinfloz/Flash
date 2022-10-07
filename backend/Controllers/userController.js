@@ -4,8 +4,17 @@ import Users from "../Models/userModel.js";
 
 const registerUser = asyncHandler(async (req, res) => {
     const { email, password, userName } = req.body;
+
+    if (!email || !password || !userName) {
+        res.status(400);
+        res.json({
+            success: false,
+            message: "fill all fields"
+        })
+        throw new Error("Fill all fields")
+    };
+
     const user = await Users.findOne({ email });
-    console.log(user);
     if (user) {
         res.status(400);
         res.json({
@@ -25,7 +34,8 @@ const registerUser = asyncHandler(async (req, res) => {
         res.status(201);
         res.json({
             success: true,
-            message: "user created"
+            message: "user created",
+            token: getToken(createUser._id)
         });
     } else {
         res.status(400);
@@ -55,6 +65,10 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new Error("invalid credentials");
     };
 });
+
+const getUser = asyncHandler(async (req, res) => {
+
+})
 
 export {
     registerUser,
