@@ -4,6 +4,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser'
 import mongoose from 'mongoose';
 import postRoutes from './Routes/postRoutes.js';
+import userRoutes from './Routes/userRoutes.js';
 import errorHandler from './Middlewares/errorMiddleware.js';
 
 dotenv.config();
@@ -27,14 +28,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.use('/api/post', postRoutes);
+app.use('/api/users/', userRoutes);
 
 app.use(errorHandler);
-//test endpoint
-// app.get('/', (req, res) => {
-//     res.json({
-//         message: "hello world"
-//     });
-// });
-
 //listener
 app.listen(port, () => `listening on ${port}`);
