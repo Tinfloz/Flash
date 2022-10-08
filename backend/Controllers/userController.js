@@ -96,11 +96,10 @@ const updateUser = asyncHandler(async (req, res) => {
             token: getToken(updateUser._id)
         });
     };
-}
-);
+});
 
 const deleteUser = asyncHandler(async (req, res) => {
-    const user = await Users.findById(req.user.id);
+    const user = await Users.findById(req.user._id);
     if (!user) {
         res.status(500);
         res.json({
@@ -117,9 +116,26 @@ const deleteUser = asyncHandler(async (req, res) => {
         });
     };
 });
+
+const getUser = asyncHandler(async (req, res) => {
+    const user = await Users.findById(req.user._id);
+    console.log(user)
+    if (!user) {
+        res.status(500);
+        res.json({
+            success: false,
+            message: "User not found"
+        });
+    } else {
+        res.status(200);
+        res.send(user);
+    };
+});
+
 export {
     registerUser,
     loginUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    getUser
 }
