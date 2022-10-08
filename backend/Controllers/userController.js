@@ -99,8 +99,27 @@ const updateUser = asyncHandler(async (req, res) => {
 }
 );
 
+const deleteUser = asyncHandler(async (req, res) => {
+    const user = await Users.findById(req.user.id);
+    if (!user) {
+        res.status(500);
+        res.json({
+            success: false,
+            message: "user not found"
+        })
+        throw new Error("user not found")
+    } else {
+        await user.remove();
+        res.status(200);
+        res.json({
+            success: true,
+            message: "user deleted"
+        });
+    };
+});
 export {
     registerUser,
     loginUser,
-    updateUser
+    updateUser,
+    deleteUser
 }
