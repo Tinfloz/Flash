@@ -10,7 +10,8 @@ const postSchema = mongoose.Schema({
         required: true
     },
     like: {
-        type: Number
+        type: Array,
+        default: []
     },
     user: {
         type: mongoose.Schema.Types.ObjectId,
