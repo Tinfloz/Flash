@@ -51,27 +51,32 @@ const loginUser = asyncHandler(async (req, res) => {
         res.status(400);
         res.json({
             success: false,
-            message: "enter all fields"
+            message: "Enter all fields"
         });
+        throw new Error("Enter all fields");
     } else {
         const user = await Users.findOne({ email });
-        if (user) {
+        if (user && await user.matchPassword(password)) {
             res.status(200);
+            const token = getToken(user._id);
+            res.cookie("token", token, {
+                expires: new Date(Date.now() + 90 * 24 * 24 * 60 * 1000),
+                httpOnly: true
+            });
             res.json({
                 success: true,
-                message: "user found",
-                token: getToken(user._id)
+                message: "Login successful",
+                token
             });
         } else {
-            res.status(500);
+            res.status(400);
             res.json({
                 success: false,
-                message: "user not found"
-            });
-            throw new Error("user not found");
-        };
-    };
-
+                message: "Invalid credentials"
+            })
+            throw new Error("Invalid credentials")
+        }
+    }
 });
 
 const updateUser = asyncHandler(async (req, res) => {
