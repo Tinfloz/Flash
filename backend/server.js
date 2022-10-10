@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 import postRoutes from './Routes/postRoutes.js';
 import userRoutes from './Routes/userRoutes.js';
 import errorHandler from './Middlewares/errorMiddleware.js';
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 const app = express();
@@ -26,6 +27,7 @@ app.use(express.json());
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(cookieParser());
 
 app.use('/api/post', postRoutes);
 app.use('/api/users/', userRoutes);

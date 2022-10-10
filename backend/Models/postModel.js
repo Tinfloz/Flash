@@ -9,11 +9,11 @@ const postSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    like: {
-        type: Array,
-        default: []
-    },
-    user: {
+    like: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    }],
+    userId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: "User"
