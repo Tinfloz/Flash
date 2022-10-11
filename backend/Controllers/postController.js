@@ -76,13 +76,13 @@ const setPosts = async (req, res) => {
         throw new Error("Add image to create post")
     } else {
         const userId = req.user._id;
-        const user = await Users.findById(userId);
         const post = await Posts.create({
             image,
             caption,
             userId
         });
         if (post) {
+            const user = await Users.findById(req.user._id);
             res.status(201);
             res.json({
                 success: true,
@@ -103,5 +103,72 @@ const setPosts = async (req, res) => {
 };
 
 const likeUnlikePosts = async (req, res) => {
+    const userId = req.user._id;
+    const post = await Posts.findById(req.params.id);
+    if (!post) {
+        res.status(404)
+        res.json({
+            success: false,
+            message: "Post not found"
+        });
+    } else {
+        if (post.likes.includes(userId)) {
+            const likeIndex = post.likes.indexOf(userId);
+            post.likes.splice(likeIndex, 1);
+            await post.save();
+            res.status(200);
+            res.json({
+                success: true,
+                message: "Post Unliked"
+            });
+        } else {
+            post.likes.push(userId);
+            await post.save();
+            res.status(200);
+            res.json({
+                success: true,
+                message: "Post liked"
+            });
+        };
+    };
+};
 
+const deletePosts = async (req, res) => {
+    const post = await Posts.findById(req.params.id);
+    const user = await Users.findById(req.user._id);
+    if (!post) {
+        res.status(404);
+        res.json({
+            success: false,
+            message: "Post not found"
+        });
+    } else {
+        if (post.userId.toString() !== req.user._id.toString()) {
+            res.status(400);
+            res.json({
+                success: false,
+                message: "Unauthorized"
+            });
+        } else {
+            res.status(200);
+            const postIndex = user.posts.indexOf(req.params.id);
+            user.posts.splice(postIndex, 1);
+            await user.save();
+            await post.remove();
+            res.json({
+                success: true,
+                message: "Post deleted"
+            });
+        };
+    };
+};
+
+const getPosts = async (req, res) =>{
+    
+} 
+
+export {
+    setPosts,
+    likeUnlikePosts,
+    deletePosts
 }

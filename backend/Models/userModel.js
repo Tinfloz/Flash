@@ -19,17 +19,28 @@ const userSchema = mongoose.Schema({
         required: true,
         unique: true
     },
-    posts: {
-        type: mongoose.Schema.Types.ObjectId,
-        default: false
-    }
+    posts: [
+        {
+            type: mongoose.Schema.Types.ObjectId
+        }
+    ],
+    followers: [
+        {
+            type: mongoose.Schema.Types.ObjectId
+        }
+    ],
+    following: [
+        {
+            type: mongoose.Schema.Types.ObjectId
+        }
+    ]
 }, { timestamps: true })
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
-userSchema.pre("save", async function () {
+userSchema.pre("save", async function (next) {
     if (!this.isModified('password')) {
         next();
     };

@@ -137,10 +137,56 @@ const getUser = asyncHandler(async (req, res) => {
     };
 });
 
+const followUnfollow = async (req, res) => {
+    const loggedInUser = await Users.findById(req.user._id);
+    const userToFollow = await Users.findById(req.params.id);
+    if (!userToFollow) {
+        res.status(404);
+        res.json({
+            success: false,
+            message: "user not found"
+        });
+    } else {
+        try {
+            if (loggedInUser.following.includes(req.params.id)) {
+                const followingIndex = loggedInUser.following.indexOf(req.params.id);
+                const followerIndex = userToFollow.followers.indexOf(req.user._id)
+                loggedInUser.following.splice(followingIndex, 1);
+                userToFollow.followers.splice(followerIndex, 1);
+                await loggedInUser.save();
+                await userToFollow.save();
+                res.status(200);
+                res.json({
+                    success: true,
+                    message: "User unfollowed"
+                });
+            } else {
+                loggedInUser.following.push(req.params.id);
+                userToFollow.followers.push(req.user._id);
+                await loggedInUser.save();
+                await userToFollow.save();
+                res.status(200);
+                res.json({
+                    success: true,
+                    mesage: "User followed"
+                });
+            };
+        } catch (error) {
+            res.status(500);
+            console.error(error);
+            res.json({
+                success: false,
+                message: error.message
+            });
+        };
+    };
+};
+
 export {
     registerUser,
     loginUser,
     updateUser,
+    followUnfollow,
     deleteUser,
     getUser
 }
