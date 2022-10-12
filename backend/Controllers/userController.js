@@ -2,48 +2,53 @@ import asyncHandler from 'express-async-handler';
 import Users from '../Models/userModel.js';
 import getToken from '../Utils/getAccessToken.js';
 
-const registerUser = asyncHandler(async (req, res) => {
+const registerUser = async (req, res) => {
     const { email, password, userName } = req.body;
     if (!email || !password || !userName) {
         res.status(400);
         res.json({
             success: false,
-            message: "enter all fields"
-        });
-        throw new Error("enter all fields");
+            message: "Enter all fields"
+        })
+        throw new Error("Enter all fields")
     };
-    const userExists = await Users.findOne({ email });
+    const userExists = await Users.findOne(email);
     if (userExists) {
         res.status(400);
         res.json({
             success: false,
-            message: "user already exists"
+            message: "User already exists"
         });
-        throw new Error("User already exists")
+        throw new Error("User already exists");
     } else {
-        const user = await Users.create({
-            email,
-            password,
-            userName
-        });
-        if (user) {
-            res.status(201);
-            res.json({
-                success: true,
-                message: "user created",
-                token: getToken(user.id)
-            });
-        } else {
+        try {
+            const user = await Users.create({
+                email,
+                password,
+                userName
+            })
+            if (user) {
+                res.status(201);
+                res.json({
+                    success: true,
+                    message: "User registered"
+                });
+            } else {
+                res.status(500);
+                res.json({
+                    success: false,
+                    message: "User could not be created"
+                });
+            };
+        } catch (error) {
             res.status(500);
             res.json({
                 success: false,
-                message: "user could not be created"
+                message: error.message
             });
-            throw new Error("User could not be created")
         };
     };
-
-});
+};
 
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
@@ -79,63 +84,78 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 });
 
-const updateUser = asyncHandler(async (req, res) => {
+const logoutUser = async (req, res) => {
+    try {
+        res.status(200);
+        res.cookie("token", null, {
+            expires: new Date(Date.now()),
+            httpOnly: true
+        });
+        res.json({
+            success: true,
+            message: "User logged out"
+        });
+    } catch (error) {
+        res.status(500);
+        res.json({
+            success: false,
+            message: error.message
+        });
+    };
+};
+
+const updatePassword = async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
     const user = await Users.findById(req.user._id);
-    if (!user) {
+    if (await user.matchPassword(oldPassword)) {
+        user.password = newPassword;
+        await user.save();
+        res.status(200);
+        res.json({
+            success: true,
+            message: "Password updated"
+        })
+    } else {
         res.status(400);
         res.json({
             success: false,
-            message: "User not found"
+            message: "Passwords don't match"
         });
-        throw new Error("User not found");
-    } else {
-        if (req.body.password) {
-            user.password = req.body.password
-        };
-        user.email = req.body.email || user.email;
-        user.userName = req.body.userName || user.userName;
+    };
+};
+
+const updateProfile = async (req, res) => {
+    const user = await Users.findById(req.user._id);
+    const { email, userName } = req.body;
+    user.email = email || user.email;
+    user.userName = userName || user.userName;
+    try {
         const updatedUser = await user.save();
-        res.json({
-            success: true,
-            message: "User updated",
-            token: getToken(updateUser._id)
-        });
-    };
-});
-
-const deleteUser = asyncHandler(async (req, res) => {
-    const user = await Users.findById(req.user._id);
-    if (!user) {
+        if (updatedUser) {
+            res.status(200);
+            res.json({
+                success: true,
+                message: "User updated",
+                updatedUser
+            });
+        } else {
+            res.status(500);
+            res.json({
+                success: false,
+                message: "User could not be updated"
+            });
+        };
+    } catch (error) {
+        console.error(error);
         res.status(500);
         res.json({
             success: false,
-            message: "user not found"
-        })
-        throw new Error("user not found")
-    } else {
-        await user.remove();
-        res.status(200);
-        res.json({
-            success: true,
-            message: "user deleted"
+            message: error.message
         });
     };
-});
+};
 
-const getUser = asyncHandler(async (req, res) => {
-    const user = await Users.findById(req.user._id);
-    console.log(user)
-    if (!user) {
-        res.status(500);
-        res.json({
-            success: false,
-            message: "User not found"
-        });
-    } else {
-        res.status(200);
-        res.send(user);
-    };
-});
+
 
 const followUnfollow = async (req, res) => {
     const loggedInUser = await Users.findById(req.user._id);
@@ -182,11 +202,31 @@ const followUnfollow = async (req, res) => {
     };
 };
 
+const deleteProfile = async (req, res) => {
+    const user = await Users.findById(req.user._id)
+    try {
+        await user.remove();
+        res.status(200);
+        res.json({
+            success: false,
+            message: "User deleted"
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500);
+        res.json({
+            success: false,
+            message: error.message
+        });
+    };
+};
+
 export {
     registerUser,
     loginUser,
-    updateUser,
+    updatePassword,
+    updateProfile,
     followUnfollow,
-    deleteUser,
-    getUser
+    logoutUser,
+    deleteProfile
 }
