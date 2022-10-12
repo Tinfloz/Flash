@@ -81,8 +81,8 @@ const loginUser = asyncHandler(async (req, res) => {
                 message: "Invalid credentials"
             })
             throw new Error("Invalid credentials")
-        }
-    }
+        };
+    };
 });
 
 const logoutUser = async (req, res) => {
@@ -156,8 +156,6 @@ const updateProfile = async (req, res) => {
     };
 };
 
-
-
 const followUnfollow = async (req, res) => {
     const loggedInUser = await Users.findById(req.user._id);
     const userToFollow = await Users.findById(req.params.id);
@@ -204,12 +202,33 @@ const followUnfollow = async (req, res) => {
 };
 
 const deleteProfile = async (req, res) => {
-    const user = await Users.findById(req.user._id)
+    const user = await Users.findById(req.user._id);
     try {
-        for (var i of user.posts) {
+        for (let i of user.posts) {
             const post = await Posts.findById(i);
-            await post.remove();
+            console.log("post:", post)
+            await post.remove()
         };
+        for (let j of user.following) {
+            const followedUser = await Users.findById(j);
+            if (followedUser.followers.includes(req.user._id)) {
+                const deletedUserIndex = followedUser.followers.indexOf(req.user._id);
+                followedUser.followers.splice(deletedUserIndex, 1);
+                await followedUser.save();
+            } else {
+                continue;
+            }
+        };
+        for (let k of user.following) {
+            const followedUser = await Users.findById(k);
+            if (followedUser.following.includes(req.user._id)) {
+                const deletedUser = followedUser.following.indexOf(req.user._id);
+                followedUser.following.splice(deletedUser, 1);
+                await followedUser.save();
+            } else {
+                continue;
+            };
+        }
         await user.remove();
         res.cookie("token", null, {
             expires: new Date(Date.now()),
@@ -218,7 +237,7 @@ const deleteProfile = async (req, res) => {
         res.status(200);
         res.json({
             success: true,
-            message: "User deleted"
+            message: "User has been deleted"
         });
     } catch (error) {
         console.error(error);
@@ -249,6 +268,43 @@ const myProfile = async (req, res) => {
     };
 };
 
+const getUserProfile = async (req, res) => {
+    try {
+        const user = await Users.findById(req.params.id);
+        if (!user) {
+            res.status(404);
+            res.json({
+                success: false,
+                message: "User not found"
+            });
+        };
+        console.log(user.posts.length);
+        if (user.posts.length !== 0) {
+            const posts = await user.populate("posts");
+            res.status(200);
+            res.json({
+                success: true,
+                message: "User profile found",
+                user
+            });
+        } else {
+            res.status(200);
+            res.json({
+                success: true,
+                message: "User has no posts",
+                user
+            });
+        };
+    } catch (error) {
+        console.error(error);
+        res.status(500);
+        res.json({
+            success: false,
+            message: error.message
+        });
+    };
+};
+
 export {
     registerUser,
     loginUser,
@@ -257,5 +313,6 @@ export {
     followUnfollow,
     logoutUser,
     deleteProfile,
-    myProfile
-}
+    myProfile,
+    getUserProfile
+};

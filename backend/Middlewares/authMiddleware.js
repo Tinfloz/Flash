@@ -4,7 +4,6 @@ import asyncHandler from 'express-async-handler';
 
 const protect = async (req, res, next) => {
     const { token } = req.cookies;
-    console.log(token);
     if (!token) {
         res.status(400);
         res.json({
@@ -14,9 +13,7 @@ const protect = async (req, res, next) => {
     } else {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            console.log(decoded);
             req.user = await Users.findById(decoded.id).select("-password");
-            console.log(req.user);
             next();
         } catch (error) {
             console.error(error);

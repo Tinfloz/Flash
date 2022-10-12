@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerUser, loginUser, updatePassword, followUnfollow, logoutUser, updateProfile, deleteProfile, myProfile } from '../Controllers/userController.js';
+import { registerUser, loginUser, updatePassword, followUnfollow, logoutUser, updateProfile, deleteProfile, myProfile, getUserProfile } from '../Controllers/userController.js';
 import protect from '../Middlewares/authMiddleware.js';
 
 const router = express.Router();
@@ -12,4 +12,5 @@ router.route('/updateprofile').put(protect, updateProfile);
 router.route('/logout').get(logoutUser);
 router.route('/deleteprofile').delete(protect, deleteProfile);
 router.route('/myprofile').get(protect, myProfile);
+router.route("/:id/userprofile").get(protect, getUserProfile);
 export default router;
