@@ -21,17 +21,18 @@ const userSchema = mongoose.Schema({
     },
     posts: [
         {
-            type: mongoose.Schema.Types.ObjectId
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Posts"
         }
     ],
     followers: [
         {
-            type: mongoose.Schema.Types.ObjectId
+            type: mongoose.Schema.Types.ObjectId,
         }
     ],
     following: [
         {
-            type: mongoose.Schema.Types.ObjectId
+            type: mongoose.Schema.Types.ObjectId,
         }
     ]
 }, { timestamps: true })

@@ -1,4 +1,5 @@
 import asyncHandler from 'express-async-handler';
+import Posts from '../Models/postModel.js';
 import Users from '../Models/userModel.js';
 import getToken from '../Utils/getAccessToken.js';
 
@@ -12,7 +13,7 @@ const registerUser = async (req, res) => {
         })
         throw new Error("Enter all fields")
     };
-    const userExists = await Users.findOne(email);
+    const userExists = await Users.findOne({ email });
     if (userExists) {
         res.status(400);
         res.json({
@@ -205,11 +206,38 @@ const followUnfollow = async (req, res) => {
 const deleteProfile = async (req, res) => {
     const user = await Users.findById(req.user._id)
     try {
+        for (var i of user.posts) {
+            const post = await Posts.findById(i);
+            await post.remove();
+        };
         await user.remove();
+        res.cookie("token", null, {
+            expires: new Date(Date.now()),
+            httpOnly: true
+        });
         res.status(200);
         res.json({
-            success: false,
+            success: true,
             message: "User deleted"
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500);
+        res.json({
+            success: false,
+            message: error.message
+        });
+    };
+};
+
+const myProfile = async (req, res) => {
+    try {
+        const user = await Users.findById(req.user._id);
+        const posts = await user.populate("posts")
+        res.status(200);
+        res.json({
+            success: true,
+            posts
         });
     } catch (error) {
         console.error(error);
@@ -228,5 +256,6 @@ export {
     updateProfile,
     followUnfollow,
     logoutUser,
-    deleteProfile
+    deleteProfile,
+    myProfile
 }
