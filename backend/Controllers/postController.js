@@ -170,7 +170,7 @@ const addComment = async (req, res) => {
             success: false,
             message: "Invalid ID"
         });
-        return
+        return;
     }
     const post = await Posts.findById(req.params.id);
     if (!post) {
@@ -179,7 +179,7 @@ const addComment = async (req, res) => {
             success: false,
             message: "Post not found"
         });
-        return
+        return;
     };
     const { comment } = req.body;
     if (!comment) {
@@ -229,11 +229,77 @@ const addComment = async (req, res) => {
     };
 };
 
+const deleteComment = async (req, res) => {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        res.status(400);
+        res.json({
+            success: false,
+            message: "Invalid ID"
+        });
+        return;
+    }
+    try {
+        const post = await Posts.findById(req.params.id);
+        if (!post) {
+            res.status(404);
+            res.json({
+                success: false,
+                message: "Post not found"
+            });
+            return;
+        }
+        if (post.userId.toString() === req.user._id.toString()) {
+            const { commentId } = req.body;
+            if (!commentId) {
+                res.status(400);
+                res.json({
+                    success: false,
+                    message: "Please enter a comment ID"
+                });
+                return;
+            };
+            for (let i of post.comments) {
+                if (i._id.toString() === commentId.toString()) {
+                    const index = post.comments.indexOf(i);
+                    post.comments.splice(index, 1);
+                    await post.save();
+                    res.status(200);
+                    res.json({
+                        success: true,
+                        message: "The chosen comment has been deleted"
+                    });
+                };
+            };
+        } else {
+            for (let i of post.comments) {
+                if (i.owner.toString() === req.user._id.toString()) {
+                    const index = post.comments.indexOf(i);
+                    post.comments.splice(index, 1);
+                    await post.save();
+                    res.status(200);
+                    res.json({
+                        success: false,
+                        message: "Comment deleted"
+                    });
+                };
+            };
+        };
+    } catch (error) {
+        console.error(error);
+        res.status(500);
+        res.json({
+            success: false,
+            message: error.message
+        });
+    };
+};
+
 export {
     setPosts,
     likeUnlikePosts,
     deletePosts,
     getPosts,
     updateCaption,
-    addComment
+    addComment,
+    deleteComment
 }
