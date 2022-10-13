@@ -61,7 +61,7 @@ userSchema.methods.getResetPasswordToken = function () {
     this.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
     this.resetPasswordTokenExpires = Date.now() + 10 * 60 * 1000;
     return resetToken;
-}
+};
 
 const Users = mongoose.model("Users", userSchema);
 export default Users;

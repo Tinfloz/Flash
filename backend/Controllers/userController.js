@@ -2,6 +2,8 @@ import asyncHandler from 'express-async-handler';
 import Posts from '../Models/postModel.js';
 import Users from '../Models/userModel.js';
 import getToken from '../Utils/getAccessToken.js';
+import sendEmail from '../Middlewares/resetPassword.js';
+import crypto from "crypto";
 
 const registerUser = async (req, res) => {
     const { email, password, userName } = req.body;
@@ -11,7 +13,7 @@ const registerUser = async (req, res) => {
             success: false,
             message: "Enter all fields"
         })
-        throw new Error("Enter all fields")
+        return;
     };
     const userExists = await Users.findOne({ email });
     if (userExists) {
@@ -20,7 +22,7 @@ const registerUser = async (req, res) => {
             success: false,
             message: "User already exists"
         });
-        throw new Error("User already exists");
+        return;
     } else {
         try {
             const user = await Users.create({
@@ -327,7 +329,7 @@ const forgetPassword = async (req, res) => {
         };
         const resetToken = user.getResetPasswordToken();
         await user.save();
-        const resetUrl = `${req.protocol}://{req.get("host")}/api/users/password/reset/${resetToken}`;
+        const resetUrl = `${req.protocol}://${req.get("host")}/api/users/password/reset/${resetToken}`;
         const message = `Reset your password by clicking on the link: ${resetUrl}`;
         try {
             await sendEmail({
@@ -338,6 +340,7 @@ const forgetPassword = async (req, res) => {
         } catch (error) {
             user.resetPasswordToken = undefined;
             user.resetPasswordTokenExpires = undefined;
+            await user.save();
             console.error(error);
             res.status(500);
             res.json({
@@ -360,6 +363,50 @@ const forgetPassword = async (req, res) => {
     };
 };
 
+const resetPassword = async (req, res) => {
+    const resetToken = req.params.token;
+    const resetTokenHashed = crypto.createHash("sha256").update(resetToken).digest("hex");
+    const user = await Users.findOne({
+        resetPasswordToken: resetTokenHashed,
+        resetPasswordTokenExpires: { $gt: Date.now() }
+    });
+    if (!user) {
+        res.status(401);
+        res.json({
+            success: false,
+            message: "Token has expired or invalid token"
+        });
+    } else {
+        try {
+            const { newPassword } = req.body;
+            if (!newPassword) {
+                res.status(400);
+                res.json({
+                    success: false,
+                    message: "Kindly enter a valid password"
+                });
+                return;
+            }
+            user.password = newPassword;
+            user.resetPasswordToken = undefined;
+            user.resetPasswordTokenExpires = undefined;
+            await user.save();
+            res.status(200);
+            res.json({
+                success: true,
+                message: "Password updated"
+            });
+        } catch (error) {
+            console.error(error);
+            res.status(500);
+            res.json({
+                success: false,
+                message: error.message
+            });
+        };
+    };
+};
+
 export {
     registerUser,
     loginUser,
@@ -369,5 +416,9 @@ export {
     logoutUser,
     deleteProfile,
     myProfile,
-    getUserProfile
+    getUserProfile,
+    forgetPassword,
+    resetPassword
 };
+
+
