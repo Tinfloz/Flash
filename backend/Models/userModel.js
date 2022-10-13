@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import crypto from "crypto";
 
 const userSchema = mongoose.Schema({
     email: {
@@ -34,7 +35,13 @@ const userSchema = mongoose.Schema({
         {
             type: mongoose.Schema.Types.ObjectId,
         }
-    ]
+    ],
+    resetPasswordToken: {
+        type: String
+    },
+    resetPasswordTokenExpires: {
+        type: Date
+    }
 }, { timestamps: true })
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
@@ -48,6 +55,13 @@ userSchema.pre("save", async function (next) {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
 });
+
+userSchema.methods.getResetPasswordToken = function () {
+    const resetToken = crypto.randomBytes(20).toString("hex");
+    this.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+    this.resetPasswordTokenExpires = Date.now() + 10 * 60 * 1000;
+    return resetToken;
+}
 
 const Users = mongoose.model("Users", userSchema);
 export default Users;

@@ -305,6 +305,61 @@ const getUserProfile = async (req, res) => {
     };
 };
 
+const forgetPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            res.status(400);
+            res.json({
+                success: false,
+                message: "Please enter a valid email to reset password"
+            });
+            return;
+        };
+        const user = await Users.findOne({ email });
+        if (!user) {
+            res.status(400);
+            res.json({
+                success: false,
+                message: "User not found"
+            });
+            return;
+        };
+        const resetToken = user.getResetPasswordToken();
+        await user.save();
+        const resetUrl = `${req.protocol}://{req.get("host")}/api/users/password/reset/${resetToken}`;
+        const message = `Reset your password by clicking on the link: ${resetUrl}`;
+        try {
+            await sendEmail({
+                email,
+                subject: "Reset your password",
+                message
+            });
+        } catch (error) {
+            user.resetPasswordToken = undefined;
+            user.resetPasswordTokenExpires = undefined;
+            console.error(error);
+            res.status(500);
+            res.json({
+                success: false,
+                message: error.messsage
+            });
+        };
+        res.status(200);
+        res.json({
+            success: true,
+            message: `Email has been sent to ${email}`
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500);
+        res.json({
+            success: false,
+            message: error.message
+        });
+    };
+};
+
 export {
     registerUser,
     loginUser,
