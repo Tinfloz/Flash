@@ -9,15 +9,29 @@ const postSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    likes: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-    }],
+    likes: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        }
+    ],
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: "User"
-    }
+    },
+    comments: [
+        {
+            owner: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User"
+            },
+            comment: {
+                type: String,
+                required: true
+            }
+        }
+    ]
 }, { timestamps: true });
 
 const Posts = mongoose.model("Posts", postSchema);

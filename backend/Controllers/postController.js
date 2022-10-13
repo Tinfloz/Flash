@@ -1,6 +1,7 @@
 import asyncHandler from 'express-async-handler';
 import Posts from '../Models/postModel.js'
 import Users from '../Models/userModel.js';
+import mongoose from "mongoose";
 
 const setPosts = async (req, res) => {
     const { image, caption } = req.body;
@@ -161,10 +162,78 @@ const updateCaption = async (req, res) => {
     };
 };
 
+//add comments to posts
+const addComment = async (req, res) => {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        res.status(400);
+        res.json({
+            success: false,
+            message: "Invalid ID"
+        });
+        return
+    }
+    const post = await Posts.findById(req.params.id);
+    if (!post) {
+        res.status(404);
+        res.json({
+            success: false,
+            message: "Post not found"
+        });
+        return
+    };
+    const { comment } = req.body;
+    if (!comment) {
+        res.status(400);
+        res.json({
+            success: false,
+            message: "Please enter a valid comment"
+        });
+        return;
+    };
+    try {
+        let commentExist = false;
+        let index;
+        for (let i of post.comments) {
+            if (i.owner.toString() == req.user._id.toString()) {
+                commentExist = true;
+                index = post.comments.indexOf(i);
+            }
+        };
+        if (commentExist) {
+            post.comments[index].comment = comment;
+            await post.save();
+            res.status(200);
+            res.json({
+                success: true,
+                message: "Comment has been updated"
+            });
+        } else {
+            post.comments.push({
+                owner: req.user._id,
+                comment
+            });
+            await post.save();
+            res.status(200);
+            res.json({
+                success: true,
+                message: "Comment has been posted"
+            });
+        };
+    } catch (error) {
+        console.error(error);
+        res.status(500);
+        res.json({
+            success: false,
+            message: error.message
+        });
+    };
+};
+
 export {
     setPosts,
     likeUnlikePosts,
     deletePosts,
     getPosts,
-    updateCaption
+    updateCaption,
+    addComment
 }
