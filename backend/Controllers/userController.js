@@ -1,4 +1,3 @@
-import asyncHandler from 'express-async-handler';
 import Posts from '../Models/postModel.js';
 import Users from '../Models/userModel.js';
 import getToken from '../Utils/getAccessToken.js';
@@ -53,27 +52,26 @@ const registerUser = async (req, res) => {
     };
 };
 
-const loginUser = asyncHandler(async (req, res) => {
+const loginUser = async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
         res.status(400);
         res.json({
             success: false,
-            message: "Enter all fields"
+            message: "Empty fields"
         });
-        throw new Error("Enter all fields");
-    } else {
+        return;
+    }
+    try {
         const user = await Users.findOne({ email });
+        console.log(user);
         if (user && await user.matchPassword(password)) {
-            res.status(200);
             const token = getToken(user._id);
-            res.cookie("token", token, {
-                expires: new Date(Date.now() + 90 * 24 * 24 * 60 * 1000),
-                httpOnly: true
-            });
+            console.log(token)
+            res.status(200);
             res.json({
-                success: true,
-                message: "Login successful",
+                success: false,
+                message: "Logged in successfully",
                 token
             });
         } else {
@@ -82,10 +80,16 @@ const loginUser = asyncHandler(async (req, res) => {
                 success: false,
                 message: "Invalid credentials"
             })
-            throw new Error("Invalid credentials")
-        };
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500);
+        res.json({
+            success: false,
+            message: error.message
+        });
     };
-});
+};
 
 const logoutUser = async (req, res) => {
     try {
@@ -420,5 +424,3 @@ export {
     forgetPassword,
     resetPassword
 };
-
-
