@@ -3,101 +3,103 @@ import Posts from '../Models/postModel.js'
 import Users from '../Models/userModel.js';
 import mongoose from "mongoose";
 
+//upload posts
 const setPosts = async (req, res) => {
-    const { image, caption } = req.body;
-    if (!image) {
-        res.status(400);
-        res.json({
-            success: false,
-            message: "image is required to create post"
-        })
-        throw new Error("Add image to create post")
-    } else {
+    try {
+        const { image, caption } = req.body;
+        if (!image) {
+            throw "Kindly upload an image"
+        }
         const userId = req.user._id;
+        const user = await Users.findById(userId)
         const post = await Posts.create({
             image,
             caption,
             userId
         });
-        if (post) {
-            const user = await Users.findById(req.user._id);
-            res.status(201);
-            res.json({
+        if (!post) {
+            throw "post could not be created";
+        } else {
+            res.status(201).json({
                 success: true,
-                message: "Post successfully created",
+                message: "Post created",
                 post
-            })
+            });
             user.posts.push(post._id);
             await user.save();
-        } else {
-            res.status(500);
-            res.json({
-                success: false,
-                message: "Post could not be created"
-            });
-            throw new Error("Post could not be created")
-        };
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Post could not be created ",
+            error: error.errors?.[0]?.message || error
+        });
     };
 };
 
+// like and unlike posts
 const likeUnlikePosts = async (req, res) => {
-    const userId = req.user._id;
-    const post = await Posts.findById(req.params.id);
-    if (!post) {
-        res.status(404)
-        res.json({
-            success: false,
-            message: "Post not found"
-        });
-    } else {
-        if (post.likes.includes(userId)) {
-            const likeIndex = post.likes.indexOf(userId);
-            post.likes.splice(likeIndex, 1);
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            throw "invalid post ID"
+        }
+        const post = await Posts.findById(req.params.id);
+        if (post.likes.includes(req.user.id)) {
+            const index = post.likes.indexOf(req.user.id);
+            post.likes.splice(index, 1);
             await post.save();
-            res.status(200);
-            res.json({
+            res.status(200).json({
                 success: true,
-                message: "Post Unliked"
+                message: "post unliked"
             });
         } else {
-            post.likes.push(userId);
+            post.likes.push(req.user._id);
             await post.save();
-            res.status(200);
-            res.json({
+            res.status(200).json({
                 success: true,
-                message: "Post liked"
+                message: "post liked"
             });
         };
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "failed",
+            error: error.errors?.[0]?.message || error
+        });
     };
+
 };
 
+// delete posts
 const deletePosts = async (req, res) => {
-    const post = await Posts.findById(req.params.id);
-    const user = await Users.findById(req.user._id);
-    if (!post) {
-        res.status(404);
-        res.json({
-            success: false,
-            message: "Post not found"
-        });
-    } else {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            throw "invalid post ID"
+        };
+        const user = await Users.findById(req.user._id);
+        const post = await Posts.findById(req.params.id);
+        if (!post) {
+            throw "post not found"
+        }
         if (post.userId.toString() !== req.user._id.toString()) {
-            res.status(400);
-            res.json({
-                success: false,
-                message: "Unauthorized"
-            });
+            throw "Not authorized to delete post";
         } else {
-            res.status(200);
             const postIndex = user.posts.indexOf(req.params.id);
             user.posts.splice(postIndex, 1);
             await user.save();
             await post.remove();
-            res.json({
+            res.status(200).json({
                 success: true,
-                message: "Post deleted"
+                message: "Post deleted",
             });
         };
+    } catch (error) {
+        console.error(error);
+        res.status(403).json({
+            success: false,
+            error: error.errors?.[0]?.message || error
+        });
     };
 };
 
@@ -116,94 +118,74 @@ const getPosts = async (req, res) => {
     });
 };
 
+//update caption
 const updateCaption = async (req, res) => {
-    const { newCaption } = req.body;
-    const post = await Posts.findById(req.params.id);
-    if (!post) {
-        res.status(404);
-        res.json({
-            success: false,
-            message: "Post not found"
-        });
-    } else {
-        try {
-            if (post.userId.toString() === req.user._id.toString()) {
-                post.caption = newCaption;
-                const updatedPost = await post.save();
-                if (updatedPost) {
-                    res.status(200);
-                    res.json({
-                        success: true,
-                        message: "Caption updated"
-                    });
-                } else {
-                    res.status(500);
-                    res.json({
-                        success: false,
-                        message: "Caption could not be updated"
-                    });
-                };
-            } else {
-                res.status(400);
-                res.json({
-                    success: false,
-                    message: "Unauthorized"
-                });
-            };
-
-        } catch {
-            console.error(error);
-            res.status(500);
-            res.json({
-                success: false,
-                message: error.message
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            throw "invalid post ID"
+        };
+        const post = await Posts.findById(req.params.id);
+        if (!post) {
+            throw "Post not found"
+        };
+        if (post.userId.toString() !== req.user._id.toString()) {
+            throw "Not authorized to update caption"
+        } else {
+            const { caption } = req.body;
+            post.caption = caption;
+            await post.save();
+            res.status(200).json({
+                success: true,
+                message: "Caption updated"
             });
+        };
+    } catch (error) {
+        console.error(error);
+        if (error === "invalid post ID") {
+            res.status(500).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        } else if (error === "Post not found") {
+            res.status(404).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        } else {
+            res.status(403).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            })
         };
     };
 };
 
 //add comments to posts
 const addComment = async (req, res) => {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-        res.status(400);
-        res.json({
-            success: false,
-            message: "Invalid ID"
-        });
-        return;
-    }
-    const post = await Posts.findById(req.params.id);
-    if (!post) {
-        res.status(404);
-        res.json({
-            success: false,
-            message: "Post not found"
-        });
-        return;
-    };
-    const { comment } = req.body;
-    if (!comment) {
-        res.status(400);
-        res.json({
-            success: false,
-            message: "Please enter a valid comment"
-        });
-        return;
-    };
     try {
-        let commentExist = false;
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            throw "Invalid post ID"
+        };
+        const post = await Posts.findById(req.params.id)
+        if (!post) {
+            throw "Post not found"
+        };
+        const { comment } = req.body;
+        if (!comment) {
+            throw "Kindly upload a valid comment";
+        };
+        let commentExists = false;
         let index;
         for (let i of post.comments) {
-            if (i.owner.toString() == req.user._id.toString()) {
-                commentExist = true;
+            if (req.user._id.toString() === i.owner.toString()) {
+                commentExists = true;
                 index = post.comments.indexOf(i);
-            }
+            };
         };
-        if (commentExist) {
+        if (commentExists) {
             post.comments[index].comment = comment;
             await post.save();
-            res.status(200);
-            res.json({
+            res.status(200).json({
                 success: true,
                 message: "Comment has been updated"
             });
@@ -213,84 +195,91 @@ const addComment = async (req, res) => {
                 comment
             });
             await post.save();
-            res.status(200);
-            res.json({
+            res.status(200).json({
                 success: true,
                 message: "Comment has been posted"
             });
         };
     } catch (error) {
         console.error(error);
-        res.status(500);
-        res.json({
-            success: false,
-            message: error.message
-        });
+        if (error === "Invalid post ID") {
+            res.status(500).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        } else if (error === "Post not found") {
+            res.status(404).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        } else {
+            res.status(400).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            })
+        };
     };
 };
 
+//delete comment
 const deleteComment = async (req, res) => {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-        res.status(400);
-        res.json({
-            success: false,
-            message: "Invalid ID"
-        });
-        return;
-    }
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            throw "Invalid post ID";
+        };
         const post = await Posts.findById(req.params.id);
         if (!post) {
-            res.status(404);
-            res.json({
-                success: false,
-                message: "Post not found"
-            });
-            return;
-        }
+            throw "Post not found";
+        };
         if (post.userId.toString() === req.user._id.toString()) {
             const { commentId } = req.body;
             if (!commentId) {
-                res.status(400);
-                res.json({
-                    success: false,
-                    message: "Please enter a comment ID"
+                throw "Please provide comment ID";
+            } else {
+                for (let i of post.comments) {
+                    if (i._id.toString() === commentId.toString()) {
+                        const commentIndex = post.comments.indexOf(i);
+                        post.comments.splice(commentIndex, 1);
+                        await post.save();
+                    };
+                };
+                res.status(200).json({
+                    success: true,
+                    message: "comment has been deleted"
                 });
-                return;
-            };
-            for (let i of post.comments) {
-                if (i._id.toString() === commentId.toString()) {
-                    const index = post.comments.indexOf(i);
-                    post.comments.splice(index, 1);
-                    await post.save();
-                    res.status(200);
-                    res.json({
-                        success: true,
-                        message: "The chosen comment has been deleted"
-                    });
-                };
-            };
+            }
+
         } else {
-            for (let i of post.comments) {
-                if (i.owner.toString() === req.user._id.toString()) {
-                    const index = post.comments.indexOf(i);
-                    post.comments.splice(index, 1);
+            for (let k of post.comments) {
+                if (k.owner.toString() === req.user._id.toString()) {
+                    const commentIndex = post.comments.indexOf(k);
+                    post.comments.splice(commentIndex, 1);
                     await post.save();
-                    res.status(200);
-                    res.json({
-                        success: false,
-                        message: "Comment deleted"
-                    });
-                };
+                }
             };
+            res.status(200).json({
+                success: true,
+                message: "comment has been deleted"
+            });
         };
     } catch (error) {
         console.error(error);
-        res.status(500);
-        res.json({
-            success: false,
-            message: error.message
-        });
+        if (error === "Invalid post ID") {
+            res.status(500).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        } else if (error === "Post not found") {
+            res.status(404).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        } else {
+            res.status(400).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            })
+        };
     };
 };
 
@@ -303,3 +292,4 @@ export {
     addComment,
     deleteComment
 }
+
