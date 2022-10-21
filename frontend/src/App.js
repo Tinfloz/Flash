@@ -4,12 +4,26 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Link
 } from "react-router-dom";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import AddPost from "./pages/AddPost";
 import MyAccount from "./pages/MyAccount";
+import {
+  ChakraProvider,
+  Box,
+  Text,
+  VStack,
+  Code,
+  Grid,
+  theme,
+} from '@chakra-ui/react';
+// import { ColorModeSwitcher } from './ColorModeSwitcher';
+// import { Logo } from './Logo';
+{/* <ChakraProvider theme={theme}>
+      <Box textAlign="center" fontSize="xl">
+        <Grid minH="100vh" p={3}>
+          <ColorModeSwitcher justifySelf="flex-end" /> */}
 
 function App() {
   return (
