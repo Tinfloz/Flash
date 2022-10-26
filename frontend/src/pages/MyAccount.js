@@ -31,7 +31,6 @@ const MyAccount = () => {
     console.log(posts)
     return (
         <>
-            <Navbar user={true} />
             <Grid templateColumns='repeat(3, 1fr)' gap={7} pl="100px" pt="60px" pb="200px" backgroundColor="rgba(255, 127, 80, 0.1)">
                 {posts.map((post) => (
                     <Post key={post._id} my={true} post={post} userName={userName} />
@@ -45,3 +44,4 @@ const MyAccount = () => {
 }
 
 export default MyAccount
+

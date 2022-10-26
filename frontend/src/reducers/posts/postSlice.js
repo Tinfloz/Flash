@@ -4,6 +4,7 @@ import postService from "./postService";
 const initialState = {
     posts: [],
     userName: null,
+    likeStatus: null,
     isError: false,
     isSuccess: false,
     isLoading: false,
@@ -23,6 +24,39 @@ export const getAllLoggedPosts = createAsyncThunk("post/getPosts", async (param,
         return thunkAPI.rejectWithValue(message)
     }
 });
+
+export const updateLikes = createAsyncThunk("post/like", async (id, thunkAPI) => {
+    try {
+        const token = thunkAPI.getState().auth.user.token;
+        return await postService.likeUnlike(id, token);
+    } catch (error) {
+        const message = (error.response && error.response.data && error.response.data.message)
+            || error.message || error.toString();
+        return thunkAPI.rejectWithValue(message)
+    }
+});
+
+export const upload = createAsyncThunk("post/upload", async (post, thunkAPI) => {
+    try {
+        const token = thunkAPI.getState().auth.user.token;
+        return await postService.uploadPosts(post, token)
+    } catch (error) {
+        const message = (error.response && error.response.data && error.response.data.message)
+            || error.message || error.toString();
+        return thunkAPI.rejectWithValue(message)
+    }
+});
+
+export const deletePostings = createAsyncThunk("post/delete", async (id, thunkAPI) => {
+    try {
+        const token = thunkAPI.getState().auth.user.token;
+        return await postService.deletePost(id, token);
+    } catch (error) {
+        const message = (error.response && error.response.data && error.response.data.message)
+            || error.message || error.toString();
+        return thunkAPI.rejectWithValue(message)
+    }
+})
 
 const postSlice = createSlice({
     name: "posts",
@@ -51,7 +85,44 @@ const postSlice = createSlice({
                 state.isLoading = false;
                 state.isError = true;
                 state.message = action.payload
-                console.log("======>", state.message)
+            })
+            .addCase(updateLikes.pending, state => {
+                state.isLoading = true;
+            })
+            .addCase(updateLikes.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.isSuccess = true;
+                state.likeStatus = action.payload.message;
+            })
+            .addCase(updateLikes.rejected, (state, action) => {
+                state.isLoading = false;
+                state.isError = true;
+                state.message = action.payload;
+                state.likeStatus = null
+            })
+            .addCase(upload.pending, state => {
+                state.isLoading = true;
+            })
+            .addCase(upload.fulfilled, state => {
+                state.isLoading = false;
+                state.isSuccess = true;
+            })
+            .addCase(upload.rejected, (state, action) => {
+                state.isLoading = false;
+                state.isError = true;
+                state.message = action.payload;
+            })
+            .addCase(deletePostings.pending, state => {
+                state.isLoading = true;
+            })
+            .addCase(deletePostings.fulfilled, state => {
+                state.isLoading = false;
+                state.isSuccess = true;
+            })
+            .addCase(deletePostings.rejected, (state, action) => {
+                state.isLoading = false;
+                state.isError = true;
+                state.message = action.payload;
             })
     }
 });

@@ -18,6 +18,8 @@ import {
   Grid,
   theme,
 } from '@chakra-ui/react';
+import Navbar from "./components/Navbar";
+import { useSelector } from "react-redux";
 // import { ColorModeSwitcher } from './ColorModeSwitcher';
 // import { Logo } from './Logo';
 {/* <ChakraProvider theme={theme}>
@@ -26,9 +28,13 @@ import {
           <ColorModeSwitcher justifySelf="flex-end" /> */}
 
 function App() {
+
+  const { user } = useSelector(state => state.auth)
+
   return (
     <Router>
       <div className="App">
+        <Navbar user={user} />
         <Routes>
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />

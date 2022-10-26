@@ -31,6 +31,7 @@ const Footer = () => {
                             onClick={() => {
                                 navigate("/account");
                                 setLink("/account");
+                                window.location.reload();
                             }} />
                     </HStack>
                 </Flex>

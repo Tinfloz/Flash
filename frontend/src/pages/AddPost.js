@@ -1,19 +1,16 @@
-import { VStack } from '@chakra-ui/react';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { Flex, VStack, Input, Button } from "@chakra-ui/react";
 import Footer from '../components/Footer';
-import Navbar from '../components/Navbar';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import "./AddPost.css"
+import { upload } from '../reducers/posts/postSlice';
 
 const AddPost = () => {
 
     const [post, setPost] = useState({
-        caption: "",
-        image: ""
+        image: "",
+        caption: ""
     });
 
-    const navigate = useNavigate();
     const dispatch = useDispatch();
 
     const handleChange = (e) => {
@@ -24,20 +21,25 @@ const AddPost = () => {
     };
 
     const handleSubmit = (e) => {
-        e.preventDefault();
-    }
+        // e.preventDefault(e);
+        dispatch(upload(post));
+    };
 
     return (
         <>
-            <Navbar />
-            <div className="d-flex justify-content-center" id="add-post-div">
-                <VStack spacing="20px">
-                    <input className='form-control' value={post.caption} type="text" id="caption" name="caption" placeholder='Enter a caption'
-                        onChange={handleChange} />
-                    <input className='form-control' value={post.image} type="text" id="image" name='image' onChange={handleChange} />
-                    <button onClick={handleSubmit} className='btn btn-primary'>Submit</button>
-                </VStack>
-            </div>
+            <Flex backgroundColor="rgba(255, 127, 80, 0.1)" justifyContent="center" pt="50px" pb="200px" >
+                <Flex w="50vh" h="50vh" backgroundColor="azure" mt="4vh" justifyContent="center">
+                    <VStack spacing="4vh" mt="12vh">
+                        <Input type="text" name="caption" value={post.caption}
+                            placeholder="Enter a caption for your post" w="300px" backgroundColor="white"
+                            onChange={handleChange} />
+                        <Input type="text" name="image" value={post.image} placeholder="Upload image"
+                            backgroundColor="white"
+                            onChange={handleChange} />
+                        <Button backgroundColor="purple.100" onClick={handleSubmit}>Submit</Button>
+                    </VStack>
+                </Flex>
+            </Flex>
             <footer id="footer">
                 <Footer />
             </footer>
