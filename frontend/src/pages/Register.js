@@ -4,8 +4,7 @@ import { BiShow, BiHide } from "react-icons/bi";
 import './Register.css'
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { register, reset } from "../reducers/auth/authSlice"
-import Footer from '../components/Footer';
+
 
 const Register = () => {
     const [show, setShow] = useState(false);
@@ -23,32 +22,6 @@ const Register = () => {
     const navigate = useNavigate();
     const toast = useToast();
 
-    const { user, isLoading, isError, isSuccess, message } = useSelector((state) => state.auth);
-    console.log(isSuccess);
-    useEffect(() => {
-        if (isError) {
-            toast({
-                position: "bottom-left",
-                title: "Error",
-                description: message,
-                status: "warning",
-                duration: 5000,
-                isClosable: true,
-            });
-        }
-        if (isSuccess || user) {
-            toast({
-                position: "bottom-left",
-                title: "Success",
-                description: user.message,
-                status: "success",
-                duration: 5000,
-                isClosable: true,
-            });
-            navigate("/account");
-        }
-        dispatch(reset());
-    }, [user, isLoading, isError, isSuccess, message, navigate, dispatch, toast]);
 
     const handleChange = (e) => {
         setUserData((prevState) => ({
@@ -59,12 +32,7 @@ const Register = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        dispatch(register(userData));
     };
-
-    if (isLoading) {
-        return <Spinner />
-    }
 
     return (
         <>

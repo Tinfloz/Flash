@@ -2,38 +2,42 @@ import React, { useState } from 'react'
 import { AiOutlineHome, AiFillHome } from "react-icons/ai";
 import { IoIosAddCircleOutline, IoIosAddCircle } from "react-icons/io";
 import { CgProfile } from "react-icons/cg";
-import { HStack, IconButton } from '@chakra-ui/react';
+import { HStack, IconButton, Flex } from '@chakra-ui/react';
 import { useNavigate } from "react-router-dom";
-import './Footer.css'
+// import './Footer.css'
+
 const Footer = () => {
-    const navigate = useNavigate();
     const [link, setLink] = useState(window.location.pathname);
+    const navigate = useNavigate();
     return (
         <>
-            <div className='d-flex justify-content-center' id='footer-div'>
-                <HStack>
-                    <IconButton
-                        icon={link === "/" ? <AiFillHome /> : <AiOutlineHome />}
-                        onClick={() => {
-                            setLink("/")
-                            navigate("/")
-                        }} />
-                    <IconButton
-                        icon={link === "/add" ? <IoIosAddCircle /> : <IoIosAddCircleOutline />}
-                        onClick={() => {
-                            setLink("/add")
-                            navigate("/add")
-                        }} />
-                    <IconButton
-                        icon={<CgProfile />}
-                        onClick={() => {
-                            setLink("/account")
-                            navigate("/account")
-                        }} />
-                </HStack>
-            </div>
+            <Flex justifyContent="center">
+                <Flex justifyContent="center">
+                    <HStack spacing="50px">
+                        <IconButton
+                            icon={link === "/" ? <AiFillHome /> : <AiOutlineHome />}
+                            onClick={() => {
+                                navigate("/");
+                                setLink("/");
+                            }} />
+                        <IconButton
+                            icon={link === "/add" ? <IoIosAddCircle /> : <IoIosAddCircleOutline />}
+                            onClick={() => {
+                                navigate("/add");
+                                setLink("/add");
+                            }} />
+                        <IconButton
+                            icon={<CgProfile />}
+                            onClick={() => {
+                                navigate("/account");
+                                setLink("/account");
+                            }} />
+                    </HStack>
+                </Flex>
+            </Flex>
         </>
     );
 };
 
 export default Footer
+
