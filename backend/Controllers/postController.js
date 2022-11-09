@@ -39,37 +39,62 @@ const setPosts = async (req, res) => {
 };
 
 // like and unlike posts
-const likeUnlikePosts = async (req, res) => {
-    try {
-        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            throw "invalid post ID"
-        }
-        const post = await Posts.findById(req.params.id);
-        if (post.likes.includes(req.user.id)) {
-            const index = post.likes.indexOf(req.user.id);
-            post.likes.splice(index, 1);
-            await post.save();
-            res.status(200).json({
-                success: true,
-                message: "post unliked"
-            });
-        } else {
-            post.likes.push(req.user._id);
-            await post.save();
-            res.status(200).json({
-                success: true,
-                message: "post liked"
-            });
-        };
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: "failed",
-            error: error.errors?.[0]?.message || error
-        });
-    };
+// const likeUnlikePosts = async (req, res) => {
+//     try {
+//         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+//             throw "post id not valid"
+//         }
+//         const post = await Posts.findById(req.params.id)
+//         if (!post) {
+//             throw "post not found"
+//         }
+//         let likeExist = false;
+//         let likeIndex;
+//         for (let i of post.likes) {
+//             if (req.user._id.toString() === i.owner.toString()) {
+//                 likeExist = true;
+//                 likeIndex = post.likes.indexOf(i);
+//             };
+//         };
+//         if (likeExist) {
+//             post.likes.splice(likeIndex, 1);
+//             await post.save();
+//             res.status(200).json({
+//                 success: true,
+//                 message: "post unliked",
+//                 post,
+//                 user: req.user._id
+//             });
+//         } else {
+//             const user = await Users.findById(req.user._id);
+//             post.likes.push({
+//                 owner: req.user._id,
+//                 name: user.userName
+//             });
+//             await post.save()
+//             res.status(200).json({
+//                 success: true,
+//                 message: "post liked",
+//                 post,
+//                 user: user._id
+//             });
+//         }
 
-};
+//     } catch (error) {
+//         console.log(error);
+//         if (error === "post id not valid") {
+//             res.status(400).json({
+//                 success: false,
+//                 error: error.errors?.[0]?.message || error
+//             });
+//         } else {
+//             res.status(404).json({
+//                 success: false,
+//                 error: error.errors?.[0]?.message || error
+//             });
+//         };
+//     };
+// };
 
 // delete posts
 const deletePosts = async (req, res) => {
@@ -92,6 +117,7 @@ const deletePosts = async (req, res) => {
             res.status(200).json({
                 success: true,
                 message: "Post deleted",
+                id: post._id
             });
         };
     } catch (error) {
@@ -177,6 +203,7 @@ const addComment = async (req, res) => {
         let commentExists = false;
         let index;
         for (let i of post.comments) {
+            console.log("=====>", i)
             if (req.user._id.toString() === i.owner.toString()) {
                 commentExists = true;
                 index = post.comments.indexOf(i);
@@ -283,6 +310,26 @@ const deleteComment = async (req, res) => {
     };
 };
 
+// get all logged in user posts
+const getLoggedInPosts = async (req, res) => {
+    try {
+        const posts = await Posts.find({
+            userId: {
+                $in: req.user._id
+            }
+        });
+        res.status(200).json({
+            success: true,
+            posts
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.errors?.[0]?.message || error
+        });
+    };
+};
+
 export {
     setPosts,
     likeUnlikePosts,
@@ -290,6 +337,32 @@ export {
     getPosts,
     updateCaption,
     addComment,
-    deleteComment
+    deleteComment,
+    getLoggedInPosts
 }
 
+const likeUnlikePosts = async (req, res) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            throw "id invalid"
+        }
+        const post = await Posts.findById(req.params.id);
+        if (!post) {
+            throw "post not found"
+        }
+        const user = await Users.findById(req.user._id);
+        post.likes.forEach(element => {
+            if (element.owner === req.user._id) {
+                let index = post.likes.indexOf(element);
+                if (index !== -1) {
+                    post.likes.splice(index, 1)
+                }
+                return post.likes
+            } else {
+                post.likes = [...post.likes, { owner: req.user._id, name: user.userName }]
+            }
+        });
+    } catch (error) {
+        console.log(error)
+    }
+}

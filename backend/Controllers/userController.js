@@ -3,39 +3,36 @@ import Users from '../Models/userModel.js';
 import getToken from '../Utils/getAccessToken.js';
 import sendEmail from '../Middlewares/resetPassword.js';
 import crypto from "crypto";
-import { serialize } from 'v8';
 import mongoose from 'mongoose';
 
 // register user 
 const registerUser = async (req, res) => {
     try {
-        const { email, password, userName } = req.body;
-        if (!email || !password || !userName) {
-            throw "Fields left blank";
+        const { userName, email, password } = req.body;
+        if (!userName || !email || !password) {
+            throw "empty fields"
         };
         const userExists = await Users.findOne({ email });
         if (userExists) {
-            throw "User already exists";
-        } else {
-            const user = await Users.create({
-                email,
-                password,
-                userName
-            });
-            if (!user) {
-                throw "User could not be created"
-            } else {
-                const token = getToken(user._id);
-                res.status(201).json({
-                    success: true,
-                    message: "user has been created",
-                    token
-                });
-            };
+            throw "user exists"
         };
+        const newUser = await Users.create({
+            userName,
+            email,
+            password
+        });
+        if (!newUser) {
+            throw "user could not be created"
+        };
+        const user = await Users.findById(newUser._id).select("-password")
+        res.status(201).json({
+            success: true,
+            user,
+            token: getToken(newUser._id)
+        })
     } catch (error) {
-        console.error(error);
-        if (error === "Fields left blank" || "User already exists") {
+        console.log(error);
+        if (error === "empty fields" || "user exists") {
             res.status(400).json({
                 success: false,
                 error: error.errors?.[0]?.message || error
@@ -58,9 +55,10 @@ const loginUser = async (req, res) => {
         };
         const user = await Users.findOne({ email });
         if (user && await user.matchPassword(password)) {
+            const sendUser = await Users.findOne({ email }).select("-password");
             res.status(200).json({
                 success: true,
-                message: "User logged in",
+                sendUser,
                 token: getToken(user._id)
             });
         } else {
@@ -129,53 +127,53 @@ const updateProfile = async (req, res) => {
 };
 
 // follow and unfollow user
-const followUnfollow = async (req, res) => {
-    try {
-        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            throw "invalid post ID";
-        };
-        const user = await Users.findById(req.user._id);
-        const followUser = await Users.findById(req.params.id);
-        if (!followUser) {
-            throw "user not found";
-        };
-        if (user.following.includes(req.params.id)) {
-            const indexOfFollowing = user.following.indexOf(req.params.id);
-            const indexOfFollower = followUser.followers.indexOf(req.user._id);
-            user.following.splice(indexOfFollowing, 1);
-            followUser.followers.splice(indexOfFollower, 1);
-            await user.save();
-            await followUser.save();
-            res.status(200).json({
-                success: true,
-                message: "User unfollowed"
-            });
-        } else {
-            user.following.push(req.params.id);
-            followUser.followers.push(req.user._id)
-            await user.save();
-            await followUser.save();
-            res.status(200).json({
-                success: true,
-                message: "User followed"
-            });
-        }
-    } catch (error) {
-        console.error(error);
-        if (error === "invalid post ID") {
-            res.status(400).json({
-                success: false,
-                error: error.errors?.[0]?.message || error
-            });
-        } else {
-            res.status(404).json({
-                success: false,
-                error: error.errors?.[0]?.message || error
-            });
+// const followUnfollow = async (req, res) => {
+//     try {
+//         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+//             throw "invalid user ID";
+//         };
+//         const user = await Users.findById(req.user._id);
+//         const followUser = await Users.findById(req.params.id);
+//         if (!followUser) {
+//             throw "user not found";
+//         };
+//         if (user.following.includes(req.params.id)) {
+//             const indexOfFollowing = user.following.indexOf(req.params.id);
+//             const indexOfFollower = followUser.followers.indexOf(req.user._id);
+//             user.following.splice(indexOfFollowing, 1);
+//             followUser.followers.splice(indexOfFollower, 1);
+//             await user.save();
+//             await followUser.save();
+//             res.status(200).json({
+//                 success: true,
+//                 message: "User unfollowed"
+//             });
+//         } else {
+//             user.following.push(req.params.id);
+//             followUser.followers.push(req.user._id)
+//             await user.save();
+//             await followUser.save();
+//             res.status(200).json({
+//                 success: true,
+//                 message: "User followed"
+//             });
+//         }
+//     } catch (error) {
+//         console.error(error);
+//         if (error === "invalid post ID") {
+//             res.status(400).json({
+//                 success: false,
+//                 error: error.errors?.[0]?.message || error
+//             });
+//         } else {
+//             res.status(404).json({
+//                 success: false,
+//                 error: error.errors?.[0]?.message || error
+//             });
 
-        };
-    };
-};
+//         };
+//     };
+// };
 
 // delete user profile
 const deleteProfile = async (req, res) => {
@@ -214,8 +212,8 @@ const deleteProfile = async (req, res) => {
 // get my profile
 const myProfile = async (req, res) => {
     try {
-        const user = Users.findById(req.user._id);
-        const posts = user.populate("posts");
+        const user = await Users.findById(req.user._id).select("-password");
+        const posts = await user.populate("posts");
         res.status(200).json({
             success: true,
             posts
@@ -230,43 +228,93 @@ const myProfile = async (req, res) => {
 };
 
 // get user profile
-const getUserProfile = async (req, res) => {
+const followUnfollow = async (req, res) => {
     try {
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            throw "Invalid ID";
+            throw "user id invalid"
         };
-        const user = await Users.findById(req.params.id);
-        if (!user) {
-            throw "User not found"
+        const toBeFollowed = await Users.findById(req.params.id);
+        if (!toBeFollowed) {
+            throw "user not found"
         };
-        if (user.posts.length > 0) {
-            for (let i of user.posts) {
-                const posts = await Posts.findById(i);
-                res.status(200).json({
-                    success: true,
-                    posts
-                });
-            };
-        } else {
+        const user = await Users.findById(req.user._id);
+        if (req.user._id.toString() === req.params.id.toString()) {
+            throw "you cannot follow yourself"
+        };
+        if (toBeFollowed.followers.includes(req.user._id)) {
+            const indexUser = toBeFollowed.followers.indexOf(req.user._id);
+            const indexToBeFollowed = user.following.indexOf(req.params.id);
+            toBeFollowed.followers.splice(indexUser, 1);
+            user.following.splice(indexToBeFollowed, 1)
+            await toBeFollowed.save();
+            await user.save();
             res.status(200).json({
                 success: true,
-                message: "User has no posts"
+                message: "user unfollowed",
+                userId: user._id
             });
-        };
+        } else {
+            toBeFollowed.followers.push(req.user._id);
+            user.following.push(req.params.id);
+            await toBeFollowed.save();
+            await user.save();
+            res.status(200).json({
+                success: true,
+                message: "user followed",
+                userId: user._id
+            })
+        }
     } catch (error) {
-        if (error === "Invalid ID") {
+        console.log(error);
+        if (error === "user id invalid") {
             res.status(400).json({
                 success: false,
                 error: error.errors?.[0]?.message || error
-            });
-        } else {
+            })
+        } else if (error === "user not found") {
             res.status(404).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            })
+        } else {
+            res.status(400).json({
                 success: false,
                 error: error.errors?.[0]?.message || error
             });
         };
     };
 };
+
+// const getUserProfile = async (req, res) => {
+//     try {
+//         const name = req.params.name;
+//         const user = await Users.findOne({ userName: name });
+//         console.log(user)
+//         if (!user) {
+//             throw "User not found"
+//         };
+//         const posts = [];
+//         for (let i of user.posts) {
+//             let post = await Posts.findById(i);
+//             posts.push(post);
+//         };
+//         res.status(200).json({
+//             success: true,
+//             id: user._id,
+//             followers: user.followers,
+//             name,
+//             posts
+//         });
+//     } catch (error) {
+//         console.log(error);
+//         if (error === "User not found") {
+//             res.status(404).json({
+//                 success: false,
+//                 error: error.errors?.[0]?.message || error
+//             });
+//         };
+//     };
+// };
 
 // generate reset link
 const forgetPassword = async (req, res) => {
@@ -358,6 +406,20 @@ const resetPassword = async (req, res) => {
     };
 };
 
+const getSearchedUser = async (req, res) => {
+    const { name } = req.query;
+    let queryTerm = name;
+    const user = await Users.find({ userName: new RegExp(queryTerm, 'i') });
+    const loggedInUser = await Users.findById(req.user._id);
+    loggedInUser.recentSearches.push(user.userName);
+    await loggedInUser.save();
+    res.status(200).json({
+        search: user.map(client => {
+            return client.userName
+        })
+    });
+};
+
 export {
     registerUser,
     loginUser,
@@ -368,6 +430,31 @@ export {
     myProfile,
     getUserProfile,
     forgetPassword,
-    resetPassword
+    resetPassword,
+    getSearchedUser
 };
 
+
+const getUserProfile = async (req, res) => {
+    try {
+        console.log(req.params.name)
+        const user = await Users.findOne({ userName: req.params.name }).select("-password");
+        if (!user) {
+            throw "User not found"
+        } else {
+            const completeUser = await user.populate("posts");
+            res.status(200).json({
+                success: true,
+                completeUser
+            });
+        };
+    } catch (error) {
+        console.log(error);
+        if (error === "User not found") {
+            res.status(404).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        };
+    };
+};

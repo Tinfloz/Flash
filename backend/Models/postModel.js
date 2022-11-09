@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const postSchema = mongoose.Schema({
     image: {
-        type: Buffer,
+        type: String,
         required: true
     },
     caption: {
@@ -11,9 +11,15 @@ const postSchema = mongoose.Schema({
     },
     likes: [
         {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User"
+            owner: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User"
+            },
+            name: {
+                type: String
+            }
         }
+
     ],
     userId: {
         type: mongoose.Schema.Types.ObjectId,

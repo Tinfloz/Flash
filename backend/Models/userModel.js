@@ -13,7 +13,7 @@ const userSchema = mongoose.Schema({
     password: {
         type: String,
         required: [true, 'Password is requires'],
-        minLength: 8
+        minLength: 8,
     },
     userName: {
         type: String,
@@ -34,6 +34,11 @@ const userSchema = mongoose.Schema({
     following: [
         {
             type: mongoose.Schema.Types.ObjectId,
+        }
+    ],
+    recentSearches: [
+        {
+            type: String,
         }
     ],
     resetPasswordToken: {
