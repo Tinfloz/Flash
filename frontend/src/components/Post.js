@@ -1,9 +1,9 @@
-import React from 'react';
-import { Avatar, HStack, Text, Image, Box, Flex, IconButton } from "@chakra-ui/react";
+import React, { useEffect, useState } from 'react';
+import { Avatar, HStack, Text, Image, Box, Flex, IconButton, useToast, VStack } from "@chakra-ui/react";
 import "./Post.css";
 import { AiFillHeart, AiFillDelete } from "react-icons/ai";
-import { updateLikes, deletePostings } from '../reducers/posts/postSlice';
-import { useDispatch } from 'react-redux';
+import { deletePost, resetHelpers, likeAndUnlikePosts } from '../reducers/post/postSlice';
+import { useDispatch, useSelector } from 'react-redux';
 import {
     Modal,
     ModalOverlay,
@@ -19,41 +19,97 @@ import {
 const Post = ({ my, post, userName }) => {
 
     const dispatch = useDispatch();
-    const { isOpen, onClose, onOpen } = useDisclosure();
+    const toast = useToast();
+    const { isOpen: isFirstOpen, onClose: onFirstClose, onOpen: onFirstOpen } = useDisclosure();
+    const { isOpen: isSecondOpen, onClose: onSecondClose, onOpen: onSecondOpen } = useDisclosure();
 
-    const handleLikes = () => {
-        dispatch(updateLikes(post._id));
-    }
+    const [liked, setLiked] = useState(false);
+    const [deleted, setDeleted] = useState(false);
 
-    const handleDelete = () => {
-        dispatch(deletePostings(post._id));
-        window.location.reload();
-    }
+    const { isSuccess, isError } = useSelector(state => state.post);
+    console.log("delete status", deleted)
+
+    const handleDeleteButton = async () => {
+        setDeleted(true)
+        await dispatch(deletePost(post._id));
+        dispatch(resetHelpers());
+        onSecondClose();
+    };
+
+    const handleLike = async () => {
+        setLiked(!liked)
+        await dispatch(likeAndUnlikePosts(post._id));
+        dispatch(resetHelpers())
+    };
+
+
+    useEffect(() => {
+        if (deleted) {
+            toast({
+                position: "bottom-left",
+                title: "Success",
+                description: "Post has been deleted successfully!",
+                status: "success",
+                duration: 9000,
+                isClosable: true,
+            })
+        }
+        if (isError) {
+            toast({
+                position: "bottom-left",
+                title: "Error",
+                description: "Post could not be deleted",
+                status: "warning",
+                duration: 9000,
+                isClosable: true,
+            })
+        }
+
+    }, [dispatch, toast, deleted])
 
     return (
         <>
-            <Box w={my ? "20rem" : "30rem"} borderRadius={my ? "md" : "lg"} borderWidth="2px" overflow="hidden" backgroundColor="azure">
+            <Box justify="center" w={my ? "25rem" : "30rem"} borderRadius={my ? "md" : "lg"} borderWidth="2px" overflow="hidden" backgroundColor="azure">
                 <Flex borderBottom="2px" borderBottomColor="gray.200">
                     <HStack spacing="1rem" mt="0.5rem" mb="0.5rem">
-                        <Avatar name={userName} src="https://bit.ly/dan-abramov" ml="1rem" />
-                        <Text>{userName}</Text>
+                        <Avatar name={post.userId.userName} src="https://bit.ly/dan-abramov" ml="1rem" />
+                        <Text as="b">{post.userId.userName}</Text>
                     </HStack>
                 </Flex>
-                <Image src={post.image} w="inherit" />
-                <Box p="10px">
-                    <HStack spacing="150px">
-                        <HStack spacing="10px">
+                <Box minH={"20rem"} display="flex" alignItems="center" justifyContent="center" bg="white">
+                    <Image src={post.image} overflow="hidden" />
+                </Box>
+                <Flex justify="center" mt="2vh">
+                    <HStack spacing="25vh" w="95%">
+                        <HStack spacing="10px" w="100%">
                             <IconButton
-                                icon={<AiFillHeart />}
-                                onClick={handleLikes} />
-                            <Text>{post.likes.length} likes</Text>
+                                icon={<AiFillHeart style={{ color: liked ? "red" : "white", stroke: "black", strokeWidth: "15" }} />}
+                                onClick={handleLike}
+                                backgroundColor="azure"
+                            />
+                            <Text as="button" onClick={onFirstOpen}>{post.likes.length} likes</Text>
+                            <Modal isOpen={isFirstOpen} onClose={onFirstClose}>
+                                <ModalOverlay />
+                                <ModalContent>
+                                    <ModalHeader>Likes</ModalHeader>
+                                    <ModalCloseButton />
+                                    <ModalBody>
+                                        <VStack>
+                                            {post.likes.map(like => (
+                                                <Text key={post._id}>{like.name}</Text>
+                                            ))}
+                                        </VStack>
+                                    </ModalBody>
+                                </ModalContent>
+                            </Modal>
                         </HStack>
                         {my ? (
                             <>
                                 <IconButton
                                     icon={<AiFillDelete />}
-                                    onClick={onOpen} />
-                                <Modal isOpen={isOpen} onClose={onClose}>
+                                    backgroundColor="azure"
+                                    onClick={onSecondOpen} />
+                                <Modal isOpen={isSecondOpen} onClose={onSecondClose}>
                                     <ModalOverlay />
                                     <ModalContent>
                                         <ModalHeader>Delete Post</ModalHeader>
@@ -62,19 +118,19 @@ const Post = ({ my, post, userName }) => {
                                             <Text fontSize="20px">Are you sure you want to delete this post?</Text>
                                         </ModalBody>
                                         <ModalFooter>
-                                            <Button colorScheme='blue' mr={3} onClick={onClose}>
+                                            <Button colorScheme='blue' mr={3} onClick={onSecondClose}>
                                                 Close
                                             </Button>
                                             <Button colorScheme="blue"
-                                                onClick={handleDelete}>Delete</Button>
+                                                onClick={handleDeleteButton}>Delete</Button>
                                         </ModalFooter>
                                     </ModalContent>
                                 </Modal>
                             </>)
                             : null}
                     </HStack>
-                </Box>
-                <Box p="10px">
+                </Flex>
+                <Box p="1.5vh" mt="1vh">
                     <Text>{post.caption}</Text>
                 </Box>
             </Box>

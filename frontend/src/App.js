@@ -6,9 +6,9 @@ import {
   Route,
 } from "react-router-dom";
 import Login from "./pages/Login";
-import Home from "./pages/Home";
+// import Home from "./pages/Home";
 import AddPost from "./pages/AddPost";
-import MyAccount from "./pages/MyAccount";
+// import MyAccount from "./pages/MyAccount";
 import {
   ChakraProvider,
   Box,
@@ -20,6 +20,10 @@ import {
 } from '@chakra-ui/react';
 import Navbar from "./components/Navbar";
 import { useSelector } from "react-redux";
+import Feed from "./pages/Feed";
+import "./App.css";
+import Search from "./pages/Search";
+import UserProfile from "./pages/UserProfile";
 // import { ColorModeSwitcher } from './ColorModeSwitcher';
 // import { Logo } from './Logo';
 {/* <ChakraProvider theme={theme}>
@@ -29,7 +33,7 @@ import { useSelector } from "react-redux";
 
 function App() {
 
-  const { user } = useSelector(state => state.auth)
+  const { user } = useSelector(state => state.user);
 
   return (
     <Router>
@@ -39,8 +43,10 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/add" element={<AddPost />} />
-          <Route path='/account' element={<MyAccount />} />
-          <Route path='/' element={<Home />} />
+          <Route path='/account' element={<Feed feed={false} />} />
+          <Route path={"/search"} element={<Search />} />
+          <Route path="/user/:name" element={<UserProfile />} />
+          <Route path='/' element={<Feed feed={true} />} />
         </Routes>
       </div>
     </Router>

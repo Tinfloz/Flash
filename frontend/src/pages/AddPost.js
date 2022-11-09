@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Flex, VStack, Input, Button } from "@chakra-ui/react";
+import { Flex, VStack, Input, Button, useToast } from "@chakra-ui/react";
 import Footer from '../components/Footer';
-import { upload } from '../reducers/posts/postSlice';
+import { createPosts, reset } from '../reducers/post/postSlice';
+import { useNavigate } from 'react-router-dom';
 
 const AddPost = () => {
 
@@ -12,6 +13,9 @@ const AddPost = () => {
     });
 
     const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const toast = useToast();
+    const { isSuccess, isError } = useSelector(state => state.post);
 
     const handleChange = (e) => {
         setPost((prevState) => ({
@@ -21,9 +25,35 @@ const AddPost = () => {
     };
 
     const handleSubmit = (e) => {
-        // e.preventDefault(e);
-        dispatch(upload(post));
+        e.preventDefault(e);
+        dispatch(createPosts(post));
     };
+
+    useEffect(() => {
+        if (isSuccess) {
+            toast({
+                position: "bottom-left",
+                title: "Success",
+                description: "Post has been created successfully!",
+                status: "success",
+                duration: 9000,
+                isClosable: true,
+            });
+            dispatch(reset());
+        }
+        if (isError) {
+            toast({
+                position: "bottom-left",
+                title: "Error",
+                description: "Sorry! Post could not be created",
+                status: "warning",
+                duration: 9000,
+                isClosable: true,
+            });
+            dispatch(reset());
+        }
+    }, [isSuccess, toast])
+
 
     return (
         <>

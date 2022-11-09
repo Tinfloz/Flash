@@ -3,16 +3,16 @@ import { Flex, Text, Image, Button, Spacer, Box } from "@chakra-ui/react";
 import logo from "../assets/flash.jpeg";
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { logout } from "../reducers/auth/authSlice";
+import { logout, reset } from "../reducers/user/userSlice";
 
 const Navbar = ({ user }) => {
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
-
-    const handleLogOut = async () => {
-        await dispatch(logout());
-        navigate("/login");
+    const handleLogOut = () => {
+        dispatch(reset());
+        dispatch(logout());
+        navigate("/login")
     }
 
     return (
@@ -42,10 +42,12 @@ const Navbar = ({ user }) => {
                     <Box>
                         <Button size="lg" colorScheme="purple"
                             mr="0.4rem"
-                            mb="0.9rem">Register</Button>
+                            mb="0.9rem"
+                            onClick={() => navigate("/register")}>Register</Button>
                         <Button size="lg" colorScheme="purple"
                             mr="0.4rem"
-                            mb="0.9rem">Login</Button>
+                            mb="0.9rem"
+                            onClick={() => navigate("/login")}>Login</Button>
                     </Box>
                 )}
             </Flex>

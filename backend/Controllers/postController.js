@@ -39,62 +39,62 @@ const setPosts = async (req, res) => {
 };
 
 // like and unlike posts
-// const likeUnlikePosts = async (req, res) => {
-//     try {
-//         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-//             throw "post id not valid"
-//         }
-//         const post = await Posts.findById(req.params.id)
-//         if (!post) {
-//             throw "post not found"
-//         }
-//         let likeExist = false;
-//         let likeIndex;
-//         for (let i of post.likes) {
-//             if (req.user._id.toString() === i.owner.toString()) {
-//                 likeExist = true;
-//                 likeIndex = post.likes.indexOf(i);
-//             };
-//         };
-//         if (likeExist) {
-//             post.likes.splice(likeIndex, 1);
-//             await post.save();
-//             res.status(200).json({
-//                 success: true,
-//                 message: "post unliked",
-//                 post,
-//                 user: req.user._id
-//             });
-//         } else {
-//             const user = await Users.findById(req.user._id);
-//             post.likes.push({
-//                 owner: req.user._id,
-//                 name: user.userName
-//             });
-//             await post.save()
-//             res.status(200).json({
-//                 success: true,
-//                 message: "post liked",
-//                 post,
-//                 user: user._id
-//             });
-//         }
+const likeUnlikePosts = async (req, res) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            throw "post id not valid"
+        }
+        const post = await Posts.findById(req.params.id)
+        if (!post) {
+            throw "post not found"
+        }
+        let likeExist = false;
+        let likeIndex;
+        for (let i of post.likes) {
+            if (req.user._id.toString() === i.owner.toString()) {
+                likeExist = true;
+                likeIndex = post.likes.indexOf(i);
+            };
+        };
+        if (likeExist) {
+            post.likes.splice(likeIndex, 1);
+            await post.save();
+            res.status(200).json({
+                success: true,
+                message: "post unliked",
+                likes: post.likes,
+                post: post._id
+            });
+        } else {
+            const user = await Users.findById(req.user._id);
+            post.likes.push({
+                owner: req.user._id,
+                name: user.userName
+            });
+            await post.save()
+            res.status(200).json({
+                success: true,
+                message: "post liked",
+                likes: post.likes,
+                post: post._id
+            });
+        }
 
-//     } catch (error) {
-//         console.log(error);
-//         if (error === "post id not valid") {
-//             res.status(400).json({
-//                 success: false,
-//                 error: error.errors?.[0]?.message || error
-//             });
-//         } else {
-//             res.status(404).json({
-//                 success: false,
-//                 error: error.errors?.[0]?.message || error
-//             });
-//         };
-//     };
-// };
+    } catch (error) {
+        console.log(error);
+        if (error === "post id not valid") {
+            res.status(400).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        };
+    };
+};
 
 // delete posts
 const deletePosts = async (req, res) => {
@@ -136,7 +136,7 @@ const getPosts = async (req, res) => {
         userId: {
             $in: loggedInUser.following
         }
-    });
+    }).populate("userId");
     res.status(200);
     res.json({
         success: true,
@@ -317,12 +317,13 @@ const getLoggedInPosts = async (req, res) => {
             userId: {
                 $in: req.user._id
             }
-        });
+        }).populate("userId");
         res.status(200).json({
             success: true,
             posts
         });
     } catch (error) {
+        console.log(error)
         res.status(500).json({
             success: false,
             error: error.errors?.[0]?.message || error
@@ -341,28 +342,3 @@ export {
     getLoggedInPosts
 }
 
-const likeUnlikePosts = async (req, res) => {
-    try {
-        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            throw "id invalid"
-        }
-        const post = await Posts.findById(req.params.id);
-        if (!post) {
-            throw "post not found"
-        }
-        const user = await Users.findById(req.user._id);
-        post.likes.forEach(element => {
-            if (element.owner === req.user._id) {
-                let index = post.likes.indexOf(element);
-                if (index !== -1) {
-                    post.likes.splice(index, 1)
-                }
-                return post.likes
-            } else {
-                post.likes = [...post.likes, { owner: req.user._id, name: user.userName }]
-            }
-        });
-    } catch (error) {
-        console.log(error)
-    }
-}
