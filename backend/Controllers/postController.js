@@ -339,6 +339,6 @@ export {
     updateCaption,
     addComment,
     deleteComment,
-    getLoggedInPosts
+    getLoggedInPosts,
 }
 

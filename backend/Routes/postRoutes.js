@@ -11,6 +11,5 @@ router.route('/:id/updatecaption').put(protect, updateCaption);
 router.route("/:id/comment").put(protect, addComment);
 router.route("/:id/deletecomment").delete(protect, deleteComment);
 router.route("/get/posts").get(protect, getLoggedInPosts)
-// router.route('/:id').delete(deletePosts);
 
 export default router;

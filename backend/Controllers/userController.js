@@ -285,36 +285,6 @@ const followUnfollow = async (req, res) => {
     };
 };
 
-// const getUserProfile = async (req, res) => {
-//     try {
-//         const name = req.params.name;
-//         const user = await Users.findOne({ userName: name });
-//         console.log(user)
-//         if (!user) {
-//             throw "User not found"
-//         };
-//         const posts = [];
-//         for (let i of user.posts) {
-//             let post = await Posts.findById(i);
-//             posts.push(post);
-//         };
-//         res.status(200).json({
-//             success: true,
-//             id: user._id,
-//             followers: user.followers,
-//             name,
-//             posts
-//         });
-//     } catch (error) {
-//         console.log(error);
-//         if (error === "User not found") {
-//             res.status(404).json({
-//                 success: false,
-//                 error: error.errors?.[0]?.message || error
-//             });
-//         };
-//     };
-// };
 
 // generate reset link
 const forgetPassword = async (req, res) => {
@@ -406,18 +376,58 @@ const resetPassword = async (req, res) => {
     };
 };
 
+// get names of searched user in search bar
 const getSearchedUser = async (req, res) => {
-    const { name } = req.query;
-    let queryTerm = name;
-    const user = await Users.find({ userName: new RegExp(queryTerm, 'i') });
-    const loggedInUser = await Users.findById(req.user._id);
-    loggedInUser.recentSearches.push(user.userName);
-    await loggedInUser.save();
-    res.status(200).json({
-        search: user.map(client => {
-            return client.userName
+    try {
+        const { name } = req.query;
+        let queryTerm = name;
+        console.log(name)
+        const user = await Users.find({ userName: new RegExp(queryTerm, 'i') });
+        res.status(200).json({
+            search: user.map(client => {
+                return client.userName
+            }),
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.errors?.[0]?.message || error
+        });
+    };
+};
+
+// get serached user profiles
+const getSearchedUserProf = async (req, res) => {
+    try {
+        const { name } = req.params;
+        const user = await Users.findOne({ userName: name })
+            .select("-password")
+            .populate({
+                path: "posts",
+                populate: {
+                    path: "userId"
+                }
+            })
+        if (!user) {
+            throw "user not found"
+        };
+        res.status(200).json({
+            success: true,
+            user
         })
-    });
+    } catch (error) {
+        if (error === "user not found") {
+            res.status(404).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        };
+    };
 };
 
 export {
@@ -428,33 +438,9 @@ export {
     followUnfollow,
     deleteProfile,
     myProfile,
-    getUserProfile,
     forgetPassword,
     resetPassword,
-    getSearchedUser
+    getSearchedUser,
+    getSearchedUserProf
 };
 
-
-const getUserProfile = async (req, res) => {
-    try {
-        console.log(req.params.name)
-        const user = await Users.findOne({ userName: req.params.name }).select("-password");
-        if (!user) {
-            throw "User not found"
-        } else {
-            const completeUser = await user.populate("posts");
-            res.status(200).json({
-                success: true,
-                completeUser
-            });
-        };
-    } catch (error) {
-        console.log(error);
-        if (error === "User not found") {
-            res.status(404).json({
-                success: false,
-                error: error.errors?.[0]?.message || error
-            });
-        };
-    };
-};

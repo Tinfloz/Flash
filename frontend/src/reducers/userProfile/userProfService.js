@@ -8,25 +8,24 @@ const getUserProfs = async (name, token) => {
             Authorization: `Bearer ${token}`
         }
     };
-    const response = await axios.get(API_URL + `${name}`, config)
+    const response = await axios.get(API_URL + `${name}/profile`, config);
     return response.data;
 };
 
-const folUnfolUser = async (id, token) => {
+const folUnfolUsers = async (id, token) => {
     const config = {
         headers: {
             Authorization: `Bearer ${token}`
         }
     };
     const response = await axios.get(API_URL + `${id}/follow`, config);
-    console.log("whar is the response", response)
     return response.data;
-};
+}
 
 
 const userProfService = {
     getUserProfs,
-    folUnfolUser
+    folUnfolUsers
 };
 
 export default userProfService;

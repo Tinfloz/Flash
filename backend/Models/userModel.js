@@ -36,11 +36,6 @@ const userSchema = mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
         }
     ],
-    recentSearches: [
-        {
-            type: String,
-        }
-    ],
     resetPasswordToken: {
         type: String
     },

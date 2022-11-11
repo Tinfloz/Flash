@@ -50,14 +50,26 @@ const changeLikeStatus = async (id, token) => {
     };
     const response = await axios.get(API_URL + `${id}/likestatus`, config);
     return response.data;
-}
+};
+
+const getSearchedUserProf = async (name, token) => {
+    const config = {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    };
+    const response = await axios.get(API_URL + `/posts/${name}`, config);
+    return response.data;
+};
+
 
 const postService = {
     uploadPosts,
     getLoggedInPosts,
     getFollowingPosts,
     deletePosts,
-    changeLikeStatus
+    changeLikeStatus,
+    getSearchedUserProf
 };
 
 export default postService;

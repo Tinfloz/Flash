@@ -64,6 +64,8 @@ export const likeAndUnlikePosts = createAsyncThunk("post/like", async (id, thunk
     }
 });
 
+
+
 const postSlice = createSlice({
     name: "post",
     initialState,
@@ -148,7 +150,6 @@ const postSlice = createSlice({
                 state.isLoading = false;
                 state.message = action.payload;
             })
-
     }
 });
 

@@ -16,7 +16,7 @@ import {
     Button
 } from '@chakra-ui/react';
 
-const Post = ({ my, post, userName }) => {
+const Post = ({ my, post }) => {
 
     const dispatch = useDispatch();
     const toast = useToast();
@@ -42,7 +42,6 @@ const Post = ({ my, post, userName }) => {
         dispatch(resetHelpers())
     };
 
-
     useEffect(() => {
         if (deleted) {
             toast({
@@ -65,7 +64,7 @@ const Post = ({ my, post, userName }) => {
             })
         }
 
-    }, [dispatch, toast, deleted])
+    }, [toast, deleted])
 
     return (
         <>
