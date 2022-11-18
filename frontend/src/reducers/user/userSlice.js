@@ -4,7 +4,7 @@ import userService from "./userService";
 const user = JSON.parse(localStorage.getItem("user"))
 
 const initialState = {
-    user: user ? user : null,
+    auth: user ? user : null,
     isSuccess: false,
     isError: false,
     isLoading: false,
@@ -31,10 +31,18 @@ export const login = createAsyncThunk("user/login", async (userCreds, thunkAPI) 
     }
 });
 
-// export const logout = () => {
-//     console.log("logout worj=king")
-//     userService.logoutUser();
-// };
+export const setUserVisibility = createAsyncThunk("user/visibility", async (visibility, thunkAPI) => {
+    try {
+        console.log("set user visible running")
+        const token = thunkAPI.getState().user.user.token;
+        return await userService.setProfileVisibility(visibility, token)
+    } catch (error) {
+        const message = (error.response && error.response.data && error.response.data.message)
+            || error.message || error.toString();
+        return thunkAPI.rejectWithValue(message)
+    }
+});
+
 
 const userSlice = createSlice({
     name: "user",
@@ -46,7 +54,7 @@ const userSlice = createSlice({
             user: state.user
         }),
         logout: () => {
-            localStorage.clear("user")
+            localStorage.removeItem("user")
         }
     },
     extraReducers: builder => {
@@ -78,7 +86,20 @@ const userSlice = createSlice({
                 state.user = null;
                 state.isError = true;
                 state.message = action.payload
-            });
+            })
+            .addCase(setUserVisibility.pending, state => {
+                state.isLoading = true;
+            })
+            .addCase(setUserVisibility.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.isSuccess = true;
+                state.user.sendUser.visibility = action.payload.visibility
+            })
+            .addCase(setUserVisibility.rejected, (state, action) => {
+                state.isLoading = false;
+                state.isError = true;
+                state.message = action.payload
+            })
     }
 });
 
