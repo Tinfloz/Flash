@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Avatar, HStack, Text, Image, Box, Flex, IconButton, useToast, VStack } from "@chakra-ui/react";
-import "./Post.css";
+import { Avatar, HStack, Text, Image, Box, Flex, IconButton, useToast, VStack, Input } from "@chakra-ui/react";
 import { AiFillHeart, AiFillDelete } from "react-icons/ai";
-import { deletePost, resetHelpers, likeAndUnlikePosts } from '../reducers/post/postSlice';
+import { FaRegComment } from "react-icons/fa";
+import { deletePost, resetHelpers, likeAndUnlikePosts, addComments, editComments, deleteComments } from '../reducers/post/postSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import {
     Modal,
@@ -16,18 +16,45 @@ import {
     Button
 } from '@chakra-ui/react';
 
-const Post = ({ my, post }) => {
+const Post = ({ my, post, user }) => {
 
     const dispatch = useDispatch();
     const toast = useToast();
     const { isOpen: isFirstOpen, onClose: onFirstClose, onOpen: onFirstOpen } = useDisclosure();
     const { isOpen: isSecondOpen, onClose: onSecondClose, onOpen: onSecondOpen } = useDisclosure();
+    const { isOpen: isThirdOpen, onClose: onThirdClose, onOpen: onThirdOpen } = useDisclosure();
 
     const [liked, setLiked] = useState(false);
     const [deleted, setDeleted] = useState(false);
+    const [newComment, setNewComment] = useState({
+        comment: ""
+    });
+    const [editComment, setEditComment] = useState({
+        newComment: ""
+    })
+    const [showEdit, setShowEdit] = useState(false);
+    const [id, setId] = useState(0);
+
+    const handleEditClick = (id) => {
+        setId(id);
+        setShowEdit(true)
+    }
+
+    const handleCommentChange = (e) => {
+        setNewComment(prevState => ({
+            ...prevState,
+            comment: e.target.value
+        }))
+    };
+
+    const handleEditComment = (e) => {
+        setEditComment(prevState => ({
+            ...prevState,
+            newComment: e.target.value
+        }))
+    };
 
     const { isSuccess, isError } = useSelector(state => state.post);
-    console.log("delete status", deleted)
 
     const handleDeleteButton = async () => {
         setDeleted(true)
@@ -80,13 +107,13 @@ const Post = ({ my, post }) => {
                 </Box>
                 <Flex justify="center" mt="2vh">
                     <HStack spacing="25vh" w="95%">
-                        <HStack spacing="10px" w="100%">
+                        <HStack spacing="1vh" w="100%">
                             <IconButton
                                 icon={<AiFillHeart style={{ color: liked ? "red" : "white", stroke: "black", strokeWidth: "15" }} />}
                                 onClick={handleLike}
                                 backgroundColor="azure"
                             />
-                            <Text as="button" onClick={onFirstOpen}>{post.likes.length} likes</Text>
+                            <Text as="button" onClick={onFirstOpen}>{post.likes.length}</Text>
                             <Modal isOpen={isFirstOpen} onClose={onFirstClose}>
                                 <ModalOverlay />
                                 <ModalContent>
@@ -99,6 +126,123 @@ const Post = ({ my, post }) => {
                                             ))}
                                         </VStack>
                                     </ModalBody>
+                                </ModalContent>
+                            </Modal>
+                            <IconButton
+                                icon={<FaRegComment style={{ color: "black" }} />}
+                                backgroundColor="azure"
+                                onClick={onThirdOpen}
+                            />
+                            <Modal isOpen={isThirdOpen} onClose={onThirdClose} size={showEdit ? "5xl" : "xl"}>
+                                <ModalOverlay />
+                                <ModalContent p="2vh">
+                                    <ModalHeader as="b">Comments</ModalHeader>
+                                    <ModalCloseButton />
+                                    <ModalBody>
+                                        {post?.comments.length === 0 ? (
+                                            <Text>Be the first one to comment!</Text>
+                                        ) : (
+                                            post.comments.map(comment => (
+                                                < HStack >
+                                                    <Text as="b" key={comment._id}>{comment.owner}</Text>
+                                                    <Text key={comment._id}>{comment.comment}</Text>
+                                                    {
+                                                        user.sendUser._id === post.userId._id ? (
+                                                            <Text as="button" color="blue.200"
+                                                                onClick={async () => {
+                                                                    let dispatchDetails = {
+                                                                        postId: post._id,
+                                                                        commentId: comment._id
+                                                                    };
+                                                                    await dispatch(deleteComments(dispatchDetails));
+                                                                    dispatch(resetHelpers());
+                                                                }} key={comment._id}>Delete</Text>
+                                                        ) : (null)
+                                                    }
+                                                    {
+                                                        user.sendUser.userName === comment.owner ? (
+                                                            <>
+                                                                {user.sendUser._id === post.userId._id ? (
+                                                                    null
+                                                                ) : (<Text as="button" color="blue.200"
+                                                                    onClick={async () => {
+                                                                        let dispatchDetails = {
+                                                                            postId: post._id,
+                                                                            commentId: comment._id
+                                                                        };
+                                                                        await dispatch(deleteComments(dispatchDetails));
+                                                                        dispatch(resetHelpers());
+                                                                    }} key={comment._id}>Delete</Text>)}
+                                                                <Text as="button" color="blue.200"
+                                                                    onClick={() => handleEditClick(comment._id)} key={comment._id}>Edit</Text>
+                                                                {id === comment._id && showEdit ?
+                                                                    (
+                                                                        <>
+                                                                            <Input value={editComment.newComment}
+                                                                                onChange={handleEditComment}
+                                                                                placeholder="Edit comment"
+                                                                                type="text"
+                                                                                width="30vh"
+                                                                            />
+                                                                            <Button
+                                                                                onClick={
+                                                                                    async () => {
+                                                                                        let editCommentDetails = {
+                                                                                            commentId: comment._id,
+                                                                                            postId: post._id,
+                                                                                            newComment: editComment
+                                                                                        };
+                                                                                        await dispatch(editComments(editCommentDetails));
+                                                                                        dispatch(resetHelpers());
+                                                                                        setShowEdit(false);
+                                                                                        setId(0)
+                                                                                        setEditComment(prevState => ({
+                                                                                            ...prevState,
+                                                                                            newComment: ""
+                                                                                        }))
+                                                                                    }
+                                                                                }
+                                                                            >Edit</Button>
+                                                                            <Button
+                                                                                onClick={() => {
+                                                                                    setShowEdit(false);
+                                                                                    setEditComment(prevState => ({
+                                                                                        ...prevState,
+                                                                                        newComment: ""
+                                                                                    }))
+                                                                                }
+                                                                                }>Cancel</Button>
+                                                                        </>
+                                                                    ) : (
+                                                                        null
+                                                                    )}
+                                                            </>
+                                                        ) : (null)
+                                                    }
+                                                </HStack >
+
+                                            )
+                                            ))
+                                        }
+                                    </ModalBody>
+                                    <ModalFooter>
+                                        <HStack>
+                                            <Input value={newComment.comment} type="text" placeholder="Add a comment" w="35vh"
+                                                onChange={handleCommentChange} />
+                                            <Button onClick={async () => {
+                                                let sendCommentDetails = {
+                                                    postId: post._id,
+                                                    comment: newComment
+                                                }
+                                                await dispatch(addComments(sendCommentDetails));
+                                                dispatch(resetHelpers());
+                                                setNewComment(prevState => ({
+                                                    ...prevState,
+                                                    comment: ""
+                                                }))
+                                            }}>Send</Button>
+                                        </HStack>
+                                    </ModalFooter>
                                 </ModalContent>
                             </Modal>
                         </HStack>
@@ -132,9 +276,10 @@ const Post = ({ my, post }) => {
                 <Box p="1.5vh" mt="1vh">
                     <Text>{post.caption}</Text>
                 </Box>
-            </Box>
+            </Box >
         </>
     );
 };
 
 export default Post
+

@@ -24,6 +24,8 @@ import Feed from "./pages/Feed";
 import "./App.css";
 import Search from "./pages/Search";
 import UserProfile from "./pages/UserProfile";
+import SetProfileVisibility from "./pages/SetProfileVisibility";
+import Notifications from "./pages/Notifications";
 // import { ColorModeSwitcher } from './ColorModeSwitcher';
 // import { Logo } from './Logo';
 {/* <ChakraProvider theme={theme}>
@@ -33,12 +35,12 @@ import UserProfile from "./pages/UserProfile";
 
 function App() {
 
-  const { user } = useSelector(state => state.user);
+  const { auth } = useSelector(state => state.user);
 
   return (
     <Router>
       <div className="App">
-        <Navbar user={user} />
+        <Navbar user={auth} />
         <Routes>
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
@@ -46,6 +48,8 @@ function App() {
           <Route path='/account' element={<Feed feed={false} />} />
           <Route path={"/search"} element={<Search />} />
           <Route path="/user/:name" element={<UserProfile />} />
+          <Route path="/set/visibility" element={<SetProfileVisibility />} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route path='/' element={<Feed feed={true} />} />
         </Routes>
       </div>

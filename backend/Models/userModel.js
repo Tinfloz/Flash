@@ -29,6 +29,7 @@ const userSchema = mongoose.Schema({
     followers: [
         {
             type: mongoose.Schema.Types.ObjectId,
+            ref: "Users"
         }
     ],
     following: [
@@ -36,6 +37,22 @@ const userSchema = mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
         }
     ],
+    sentRequests: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+        }
+    ],
+    pendingRequests: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Users"
+        }
+    ],
+    visibility: {
+        type: String,
+        enum: ["Public", "Private"],
+        default: "Public"
+    },
     resetPasswordToken: {
         type: String
     },

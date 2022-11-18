@@ -24,10 +24,10 @@ const registerUser = async (req, res) => {
         if (!newUser) {
             throw "user could not be created"
         };
-        const user = await Users.findById(newUser._id).select("-password")
+        const sendUser = await Users.findById(newUser._id).select("-password")
         res.status(201).json({
             success: true,
-            user,
+            sendUser,
             token: getToken(newUser._id)
         })
     } catch (error) {
@@ -228,62 +228,62 @@ const myProfile = async (req, res) => {
 };
 
 // get user profile
-const followUnfollow = async (req, res) => {
-    try {
-        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            throw "user id invalid"
-        };
-        const toBeFollowed = await Users.findById(req.params.id);
-        if (!toBeFollowed) {
-            throw "user not found"
-        };
-        const user = await Users.findById(req.user._id);
-        if (req.user._id.toString() === req.params.id.toString()) {
-            throw "you cannot follow yourself"
-        };
-        if (toBeFollowed.followers.includes(req.user._id)) {
-            const indexUser = toBeFollowed.followers.indexOf(req.user._id);
-            const indexToBeFollowed = user.following.indexOf(req.params.id);
-            toBeFollowed.followers.splice(indexUser, 1);
-            user.following.splice(indexToBeFollowed, 1)
-            await toBeFollowed.save();
-            await user.save();
-            res.status(200).json({
-                success: true,
-                message: "user unfollowed",
-                userId: user._id
-            });
-        } else {
-            toBeFollowed.followers.push(req.user._id);
-            user.following.push(req.params.id);
-            await toBeFollowed.save();
-            await user.save();
-            res.status(200).json({
-                success: true,
-                message: "user followed",
-                userId: user._id
-            })
-        }
-    } catch (error) {
-        console.log(error);
-        if (error === "user id invalid") {
-            res.status(400).json({
-                success: false,
-                error: error.errors?.[0]?.message || error
-            })
-        } else if (error === "user not found") {
-            res.status(404).json({
-                success: false,
-                error: error.errors?.[0]?.message || error
-            })
-        } else {
-            res.status(400).json({
-                success: false,
-                error: error.errors?.[0]?.message || error
-            });
-        };
-    };
-};
+// const followUnfollow = async (req, res) => {
+//     try {
+//         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+//             throw "user id invalid"
+//         };
+//         const toBeFollowed = await Users.findById(req.params.id);
+//         if (!toBeFollowed) {
+//             throw "user not found"
+//         };
+//         const user = await Users.findById(req.user._id);
+//         if (req.user._id.toString() === req.params.id.toString()) {
+//             throw "you cannot follow yourself"
+//         };
+//         if (toBeFollowed.followers.includes(req.user._id)) {
+//             const indexUser = toBeFollowed.followers.indexOf(req.user._id);
+//             const indexToBeFollowed = user.following.indexOf(req.params.id);
+//             toBeFollowed.followers.splice(indexUser, 1);
+//             user.following.splice(indexToBeFollowed, 1)
+//             await toBeFollowed.save();
+//             await user.save();
+//             res.status(200).json({
+//                 success: true,
+//                 message: "user unfollowed",
+//                 userId: user._id
+//             });
+//         } else {
+//             toBeFollowed.followers.push(req.user._id);
+//             user.following.push(req.params.id);
+//             await toBeFollowed.save();
+//             await user.save();
+//             res.status(200).json({
+//                 success: true,
+//                 message: "user followed",
+//                 userId: user._id
+//             })
+//         }
+//     } catch (error) {
+//         console.log(error);
+//         if (error === "user id invalid") {
+//             res.status(400).json({
+//                 success: false,
+//                 error: error.errors?.[0]?.message || error
+//             })
+//         } else if (error === "user not found") {
+//             res.status(404).json({
+//                 success: false,
+//                 error: error.errors?.[0]?.message || error
+//             })
+//         } else {
+//             res.status(400).json({
+//                 success: false,
+//                 error: error.errors?.[0]?.message || error
+//             });
+//         };
+//     };
+// };
 
 
 // generate reset link
@@ -396,28 +396,21 @@ const getSearchedUser = async (req, res) => {
     };
 };
 
-// get serached user profiles
-const getSearchedUserProf = async (req, res) => {
+//set user visibility
+const setVisibility = async (req, res) => {
     try {
-        const { name } = req.params;
-        const user = await Users.findOne({ userName: name })
-            .select("-password")
-            .populate({
-                path: "posts",
-                populate: {
-                    path: "userId"
-                }
-            })
-        if (!user) {
-            throw "user not found"
-        };
+        const { visibility } = req.body;
+        console.log(visibility);
+        const user = await Users.findByIdAndUpdate(req.user._id, { visibility }, { new: true })
+        console.log(user)
+        await user.save();
         res.status(200).json({
             success: true,
-            user
+            visibility
         })
     } catch (error) {
-        if (error === "user not found") {
-            res.status(404).json({
+        if (error === "you need to select visibility") {
+            res.status(400).json({
                 success: false,
                 error: error.errors?.[0]?.message || error
             });
@@ -427,6 +420,177 @@ const getSearchedUserProf = async (req, res) => {
                 error: error.errors?.[0]?.message || error
             });
         };
+    };
+};
+
+
+// accept request
+const acceptRequest = async (req, res) => {
+    try {
+        const { name } = req.params;
+        const user = await Users.findById(req.user._id);
+        const toAccept = await Users.findOne({ userName: name })
+        if (!toAccept) {
+            throw "user not found"
+        }
+        if (!user.pendingRequests.includes(toAccept._id)) {
+            throw "Pending request not found"
+        } else {
+            const index = user.pendingRequests.indexOf(toAccept._id);
+            const toAcceptIndex = toAccept.sentRequests.indexOf(user._id)
+            user.pendingRequests.splice(index, 1);
+            user.followers.push(toAccept._id);
+            toAccept.sentRequests.splice(toAcceptIndex, 1);
+            toAccept.following.push(user._id);
+            await user.save();
+            await toAccept.save();
+            res.status(200).json({
+                success: true,
+                user,
+                toAccept
+            })
+        }
+    } catch (error) {
+        if (error === "invalid id") {
+            res.status(500).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        };
+        if (error === "Pending request not found" || "user not found") {
+            res.status(404).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        };
+    };
+};
+
+//reject request
+const rejectRequest = async (req, res) => {
+    try {
+        const { name } = req.params
+        const user = await Users.findById(req.user._id);
+        const toReject = await Users.findOne({ userName: name });
+        if (!toReject) {
+            throw "user not found"
+        }
+        if (!user.pendingRequests.includes(toReject._id)) {
+            throw "Pending request not found"
+        } else {
+            const index = user.pendingRequests.indexOf(toReject._id);
+            const indexToReject = toReject.sentRequests.indexOf(user._id);
+            user.pendingRequests.splice(index, 1);
+            toReject.sentRequests.splice(indexToReject, 1);
+            await user.save();
+            await toReject.save();
+            res.status(200).json({
+                success: true,
+                user,
+                toReject
+            });
+        };
+    } catch (error) {
+        if (error === "invalid id") {
+            res.status(500).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        };
+        if (error === "Pending request not found" || "user not found") {
+            res.status(404).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        };
+    };
+};
+
+// follow users
+const followUnfollow = async (req, res) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            throw "invalid id"
+        };
+        if (req.user._id === req.params.id) {
+            throw "you cannot follow yourself"
+        };
+        let message;
+        const loggedInUser = await Users.findById(req.user._id);
+        const user = await Users.findById(req.params.id);
+        if (user.visibility === "Private" && !user.followers.includes(loggedInUser._id) &&
+            !user.pendingRequests.includes(loggedInUser._id)) {
+            console.log("first if")
+            user.pendingRequests.push(loggedInUser._id)
+            loggedInUser.sentRequests.push(user._id)
+            await user.save();
+            await loggedInUser.save();
+            message = "Request sent"
+        } else if (user.visibility === "Public" && !user.followers.includes(req.user._id)) {
+            user.followers.push(loggedInUser._id);
+            loggedInUser.following.push(user._id);
+            await user.save();
+            await loggedInUser.save();
+            message = "Followed"
+        } else if ((user.visibility === "Private" && user.followers.includes(loggedInUser._id)) ||
+            user.visibility === "Public" && user.followers.includes(loggedInUser._id)) {
+            console.log("third if")
+            const index = user.followers.indexOf(loggedInUser._id);
+            user.followers.splice(index, 1);
+            const indexSent = loggedInUser.following.indexOf(user._id);
+            loggedInUser.following.splice(indexSent, 1)
+            await user.save();
+            await loggedInUser.save();
+            message = "Unfollowed"
+        } else if ((user.visibility === "Private" && user.pendingRequests.includes(loggedInUser._id))) {
+            const index = user.pendingRequests.indexOf(loggedInUser._id);
+            const indexSent = loggedInUser.sentRequests.indexOf(user._id);
+            user.pendingRequests.splice(index, 1);
+            loggedInUser.sentRequests.splice(indexSent, 1);
+            await user.save();
+            await loggedInUser.save();
+            message = "Removed from pending"
+        };
+        res.status(200).json({
+            success: true,
+            message,
+            sender: loggedInUser._id
+        })
+    } catch (error) {
+        if (error === "invalid id") {
+            res.status(500).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            })
+        } else if (error === "you cannot follow yourself") {
+            res.status(400).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            })
+        } else {
+            res.status(500).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        };
+    };
+};
+
+// get all pending follow requests
+const getFollowRequests = async (req, res) => {
+    try {
+        const user = await Users.findById(req.user._id)
+            .select("pendingRequests")
+            .populate("pendingRequests");
+        res.status(200).json({
+            success: true,
+            requests: user.pendingRequests.map(request => request.userName)
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.errors?.[0]?.message || error
+        });
     };
 };
 
@@ -441,6 +605,12 @@ export {
     forgetPassword,
     resetPassword,
     getSearchedUser,
-    getSearchedUserProf
+    setVisibility,
+    acceptRequest,
+    rejectRequest,
+    getFollowRequests
 };
+
+
+
 

@@ -3,17 +3,16 @@ import { configureStore } from "@reduxjs/toolkit";
 import userReducer from "./reducers/user/userSlice";
 // import postReducer from "./reducers/posts/pSlice";
 import postReducer from "./reducers/post/postSlice"
-import feedReducer from "./reducers/feed/feedSlice";
 import searchReducer from "./reducers/search/searchSlice";
-import userProfReducer from "./reducers/userProfile/userProfSlice"
+import requestReducer from "./reducers/followRequests/followRequestSlice";
+
 
 const store = configureStore({
     reducer: {
         user: userReducer,
         post: postReducer,
-        feed: feedReducer,
         search: searchReducer,
-        userProf: userProfReducer,
+        requests: requestReducer,
     }
 });
 

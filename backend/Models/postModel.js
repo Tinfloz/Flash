@@ -29,8 +29,7 @@ const postSchema = mongoose.Schema({
     comments: [
         {
             owner: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Users"
+                type: String
             },
             comment: {
                 type: String,
