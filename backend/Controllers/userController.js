@@ -447,7 +447,7 @@ const acceptRequest = async (req, res) => {
             res.status(200).json({
                 success: true,
                 user,
-                toAccept
+                name: toAccept.userName
             })
         }
     } catch (error) {
@@ -487,7 +487,7 @@ const rejectRequest = async (req, res) => {
             res.status(200).json({
                 success: true,
                 user,
-                toReject
+                name: toReject.userName
             });
         };
     } catch (error) {

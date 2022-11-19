@@ -31,13 +31,12 @@ const Post = ({ my, post, user }) => {
     });
     const [editComment, setEditComment] = useState({
         newComment: ""
-    })
-    const [showEdit, setShowEdit] = useState(false);
+    });
+
     const [id, setId] = useState(0);
 
     const handleEditClick = (id) => {
         setId(id);
-        setShowEdit(true)
     }
 
     const handleCommentChange = (e) => {
@@ -133,7 +132,7 @@ const Post = ({ my, post, user }) => {
                                 backgroundColor="azure"
                                 onClick={onThirdOpen}
                             />
-                            <Modal isOpen={isThirdOpen} onClose={onThirdClose} size={showEdit ? "5xl" : "xl"}>
+                            <Modal isOpen={isThirdOpen} onClose={onThirdClose} size={"4xl"}>
                                 <ModalOverlay />
                                 <ModalContent p="2vh">
                                     <ModalHeader as="b">Comments</ModalHeader>
@@ -175,7 +174,7 @@ const Post = ({ my, post, user }) => {
                                                                     }} key={comment._id}>Delete</Text>)}
                                                                 <Text as="button" color="blue.200"
                                                                     onClick={() => handleEditClick(comment._id)} key={comment._id}>Edit</Text>
-                                                                {id === comment._id && showEdit ?
+                                                                {id === comment._id ?
                                                                     (
                                                                         <>
                                                                             <Input value={editComment.newComment}
@@ -194,7 +193,6 @@ const Post = ({ my, post, user }) => {
                                                                                         };
                                                                                         await dispatch(editComments(editCommentDetails));
                                                                                         dispatch(resetHelpers());
-                                                                                        setShowEdit(false);
                                                                                         setId(0)
                                                                                         setEditComment(prevState => ({
                                                                                             ...prevState,
@@ -205,7 +203,7 @@ const Post = ({ my, post, user }) => {
                                                                             >Edit</Button>
                                                                             <Button
                                                                                 onClick={() => {
-                                                                                    setShowEdit(false);
+                                                                                    setId(0)
                                                                                     setEditComment(prevState => ({
                                                                                         ...prevState,
                                                                                         newComment: ""
