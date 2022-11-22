@@ -128,6 +128,19 @@ export const deleteComments = createAsyncThunk("post/delete/comments", async (de
     }
 });
 
+export const updateCaptionPost = createAsyncThunk("post/update/caption", async (captionDetails, thunkAPI) => {
+    try {
+        const token = thunkAPI.getState().user.auth.token;
+        const { postId, caption } = captionDetails;
+        console.log(postId, caption)
+        return await postService.updatePostCaption(token, postId, caption);
+    } catch (error) {
+        const message = (error.response && error.response.data && error.response.data.message)
+            || error.message || error.toString();
+        return thunkAPI.rejectWithValue(message)
+    }
+});
+
 
 const postSlice = createSlice({
     name: "post",
@@ -339,6 +352,26 @@ const postSlice = createSlice({
             .addCase(deleteComments.rejected, (state, action) => {
                 state.isError = true;
                 state.isLoading = false;
+                state.message = action.payload;
+            })
+            .addCase(updateCaptionPost.pending, state => {
+                state.isLoading = true;
+            })
+            .addCase(updateCaptionPost.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.isSuccess = true;
+                const newPosts = state.user.posts.map(post => {
+                    if (post._id === action.payload.postId) {
+                        post.caption = action.payload.caption
+                    }
+                    return post
+                })
+                let newUser = { ...state.user, posts: newPosts };
+                state.user = newUser;
+            })
+            .addCase(updateCaptionPost.rejected, (state, action) => {
+                state.isLoading = false;
+                state.isError = true;
                 state.message = action.payload;
             })
     }

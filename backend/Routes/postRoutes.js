@@ -7,7 +7,7 @@ router.route('/').post(protect, setPosts);
 router.route("/:id/likestatus").get(protect, likeUnlikePosts)
 router.route("/:id/delete").delete(protect, deletePosts)
 router.route('/posts').get(protect, getPosts);
-router.route('/:id/update/caption').post(protect, updateCaption);
+router.route('/:id/update/caption').get(protect, updateCaption);
 router.route("/:id/comment").post(protect, addComment);
 router.route("/:post/:comment/delete/comment").get(protect, deleteComment);
 router.route("/get/posts").get(protect, getLoggedInPosts);

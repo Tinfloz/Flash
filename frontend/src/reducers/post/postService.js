@@ -7,8 +7,9 @@ const uploadPosts = async (post, token) => {
     const config = {
         headers: {
             Authorization: `Bearer ${token}`
-        }
+        },
     };
+    console.log(post)
     const response = await axios.post(API_URL, post, config);
     return response.data;
 };
@@ -107,6 +108,19 @@ const deletePostComments = async (postId, commentId, token) => {
     return response.data;
 };
 
+const updatePostCaption = async (token, id, caption) => {
+    console.log("running service update")
+    const config = {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    };
+    console.log(API_URL + `${id}/update/caption`)
+    const response = await axios.post(API_URL + `${id}/update/caption`, caption, config);
+    console.log(response.data)
+    return response.data;
+};
+
 const postService = {
     uploadPosts,
     getLoggedInPosts,
@@ -117,7 +131,8 @@ const postService = {
     folUnfolUsers,
     addPostComments,
     editPostComments,
-    deletePostComments
+    deletePostComments,
+    updatePostCaption
 };
 
 export default postService;

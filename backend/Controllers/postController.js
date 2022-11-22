@@ -4,40 +4,48 @@ import mongoose from "mongoose";
 import cloudinary from "cloudinary"
 
 //upload posts
-// const setPosts = async (req, res) => {
-//     try {
-//         const { image, caption } = req.body;
-//         if (!image) {
-//             throw "Kindly upload an image"
-//         }
-//         const userId = req.user._id;
-//         const user = await Users.findById(userId)
-//         const post = await Posts.create({
-//             image,
-//             caption,
-//             userId
-//         });
-//         if (!post) {
-//             throw "post could not be created";
-//         } else {
-//             res.status(201).json({
-//                 success: true,
-//                 message: "Post created",
-//                 post
-//             });
-//             user.posts.push(post._id);
-//             await user.save();
-//         }
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({
-//             success: false,
-//             message: "Post could not be created ",
-//             error: error.errors?.[0]?.message || error
-//         });
-//     };
-// };
-
+const setPosts = async (req, res) => {
+    try {
+        const { image, caption } = req.body;
+        if (!image) {
+            throw "No image uploaded"
+        };
+        const user = await Users.findById(req.user._id)
+        const cloudResponse = await cloudinary.v2.uploader.upload(req.body.image, {
+            folder: "Flash App",
+        });
+        console.log(cloudResponse)
+        const post = await Posts.create({
+            image: {
+                publicId: cloudResponse.public_id,
+                url: cloudResponse.secure_url
+            },
+            caption,
+            userId: user._id
+        });
+        if (!post) {
+            throw "post could not be created"
+        }
+        user.posts.push(post._id);
+        await user.save();
+        res.status(201).json({
+            success: true,
+            message: "post has been created"
+        })
+    } catch (error) {
+        if (error === "No image uploaded") {
+            res.status(400).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            })
+        } else if (error === "post could not be created" || error) {
+            res.status(500).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        };
+    };
+};
 // like and unlike posts
 const likeUnlikePosts = async (req, res) => {
     try {
@@ -99,33 +107,55 @@ const likeUnlikePosts = async (req, res) => {
 // delete posts
 const deletePosts = async (req, res) => {
     try {
-        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            throw "invalid post ID"
+        const { id } = req.params;
+        console.log(id)
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            throw "not a valid id"
         };
         const user = await Users.findById(req.user._id);
-        const post = await Posts.findById(req.params.id);
+        const post = await Posts.findById(id);
         if (!post) {
             throw "post not found"
-        }
+        };
         if (post.userId.toString() !== req.user._id.toString()) {
-            throw "Not authorized to delete post";
+            throw "not authorized to delete post"
         } else {
-            const postIndex = user.posts.indexOf(req.params.id);
-            user.posts.splice(postIndex, 1);
-            await user.save();
+            for (let i of user.posts) {
+                if (i.toString() === id) {
+                    let index = user.posts.indexOf(id);
+                    user.posts.splice(index, 1);
+                    await user.save();
+                    break;
+                }
+            }
+            cloudinary.v2.uploader.destroy(post.image.publicId, {
+                folder: "Flash App"
+            });
             await post.remove();
             res.status(200).json({
                 success: true,
                 message: "Post deleted",
                 id: post._id
+            })
+        }
+
+    } catch (error) {
+        if (error === "not a valid id" || error) {
+            res.status(500).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        } else if (error === "post not found") {
+            res.status(404).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        } else if (error === "not authorized to delete post") {
+            res.status(403).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
             });
         };
-    } catch (error) {
-        console.error(error);
-        res.status(403).json({
-            success: false,
-            error: error.errors?.[0]?.message || error
-        });
     };
 };
 
@@ -190,67 +220,8 @@ const updateCaption = async (req, res) => {
     };
 };
 
-//delete comment
-// const deleteComment = async (req, res) => {
-//     try {
-//         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-//             throw "Invalid post ID";
-//         };
-//         const post = await Posts.findById(req.params.id);
-//         if (!post) {
-//             throw "Post not found";
-//         };
-//         if (post.userId.toString() === req.user._id.toString()) {
-//             const { commentId } = req.body;
-//             if (!commentId) {
-//                 throw "Please provide comment ID";
-//             } else {
-//                 for (let i of post.comments) {
-//                     if (i._id.toString() === commentId.toString()) {
-//                         const commentIndex = post.comments.indexOf(i);
-//                         post.comments.splice(commentIndex, 1);
-//                         await post.save();
-//                     };
-//                 };
-//                 res.status(200).json({
-//                     success: true,
-//                     message: "comment has been deleted"
-//                 });
-//             }
 
-//         } else {
-//             for (let k of post.comments) {
-//                 if (k.owner.toString() === req.user._id.toString()) {
-//                     const commentIndex = post.comments.indexOf(k);
-//                     post.comments.splice(commentIndex, 1);
-//                     await post.save();
-//                 }
-//             };
-//             res.status(200).json({
-//                 success: true,
-//                 message: "comment has been deleted"
-//             });
-//         };
-//     } catch (error) {
-//         console.error(error);
-//         if (error === "Invalid post ID") {
-//             res.status(500).json({
-//                 success: false,
-//                 error: error.errors?.[0]?.message || error
-//             });
-//         } else if (error === "Post not found") {
-//             res.status(404).json({
-//                 success: false,
-//                 error: error.errors?.[0]?.message || error
-//             });
-//         } else {
-//             res.status(400).json({
-//                 success: false,
-//                 error: error.errors?.[0]?.message || error
-//             })
-//         };
-//     };
-// };
+
 
 // get all logged in user posts
 const getLoggedInPosts = async (req, res) => {
@@ -319,19 +290,6 @@ const getSearchedUserPosts = async (req, res) => {
         };
     };
 };
-
-export {
-    setPosts,
-    likeUnlikePosts,
-    deletePosts,
-    getPosts,
-    updateCaption,
-    addComment,
-    deleteComment,
-    getLoggedInPosts,
-    getSearchedUserPosts,
-    editComment
-}
 
 //add comment 
 const addComment = async (req, res) => {
@@ -427,7 +385,6 @@ const editComment = async (req, res) => {
     };
 };
 
-
 // delete comment
 const deleteComment = async (req, res) => {
     try {
@@ -465,46 +422,21 @@ const deleteComment = async (req, res) => {
     };
 };
 
+export {
+    setPosts,
+    likeUnlikePosts,
+    deletePosts,
+    getPosts,
+    updateCaption,
+    addComment,
+    deleteComment,
+    getLoggedInPosts,
+    getSearchedUserPosts,
+    editComment
+}
 
-const setPosts = async (req, res) => {
-    try {
-        const { image, caption } = req.body;
-        if (!image) {
-            throw "No image uploaded"
-        };
-        const user = await Users.findById(req.user._id)
-        const cloudResponse = await cloudinary.v2.uploader.upload(req.body.image, {
-            folder: "Flash App",
-        });
-        console.log(cloudResponse)
-        const post = await Posts.create({
-            image: {
-                publicId: cloudResponse.public_id,
-                url: cloudResponse.secure_url
-            },
-            caption,
-            userId: user._id
-        });
-        if (!post) {
-            throw "post could not be created"
-        }
-        user.posts.push(post._id);
-        await user.save();
-        res.status(201).json({
-            success: true,
-            message: "post has been created"
-        })
-    } catch (error) {
-        if (error === "No image uploaded") {
-            res.status(400).json({
-                success: false,
-                error: error.errors?.[0]?.message || error
-            })
-        } else if (error === "post could not be created" || error) {
-            res.status(500).json({
-                success: false,
-                error: error.errors?.[0]?.message || error
-            });
-        };
-    };
-};
+
+
+
+
+
