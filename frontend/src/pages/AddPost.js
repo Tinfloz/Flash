@@ -1,80 +1,90 @@
-import React, { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { Flex, VStack, Input, Button, useToast } from "@chakra-ui/react";
+import React, { useEffect, useState, useRef } from 'react';
+import { Box, Flex, Text, Input, VStack, Button, useToast } from '@chakra-ui/react';
 import Footer from '../components/Footer';
-import { createPosts, reset } from '../reducers/post/postSlice';
-import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { createPosts, resetHelpers } from '../reducers/post/postSlice';
 
 const AddPost = () => {
 
-    const [post, setPost] = useState({
+    const dispatch = useDispatch();
+    const toast = useToast();
+    const [upload, setUpload] = useState({
         image: "",
         caption: ""
     });
+    console.log("add post rerendered")
+    const [uploadSuccess, setUploadSuccess] = useState(false);
 
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
-    const toast = useToast();
-    const { isSuccess, isError } = useSelector(state => state.post);
-
-    const handleChange = (e) => {
-        setPost((prevState) => ({
-            ...prevState,
-            [e.target.name]: e.target.value
-        }));
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault(e);
-        dispatch(createPosts(post));
-    };
 
     useEffect(() => {
-        if (isSuccess) {
-            toast({
-                position: "bottom-left",
-                title: "Success",
-                description: "Post has been created successfully!",
-                status: "success",
-                duration: 9000,
-                isClosable: true,
-            });
-            dispatch(reset());
+        if (uploadSuccess) {
+            toast(
+                {
+                    position: "bottom-left",
+                    title: "Success",
+                    description: "Post has been uploaded!",
+                    status: "success",
+                    duration: 9000,
+                    isClosable: true,
+                }
+            )
+            setUploadSuccess(false)
         }
-        if (isError) {
-            toast({
-                position: "bottom-left",
-                title: "Error",
-                description: "Sorry! Post could not be created",
-                status: "warning",
-                duration: 9000,
-                isClosable: true,
-            });
-            dispatch(reset());
-        }
-    }, [isSuccess, toast])
+    }, [toast, uploadSuccess])
 
 
+    const handleFileUpload = (e) => {
+        const imgFile = e.target.files[0];
+        const fileReader = new FileReader();
+        fileReader.onloadend = () => {
+            if (fileReader.readyState === 2) {
+                setUpload(prevState => ({
+                    ...prevState,
+                    image: fileReader.result
+                }))
+            }
+        };
+        fileReader.readAsDataURL(imgFile)
+    }
     return (
         <>
-            <Flex backgroundColor="rgba(255, 127, 80, 0.1)" justifyContent="center" pt="50px" pb="200px" >
-                <Flex w="50vh" h="50vh" backgroundColor="azure" mt="4vh" justifyContent="center">
-                    <VStack spacing="4vh" mt="12vh">
-                        <Input type="text" name="caption" value={post.caption}
-                            placeholder="Enter a caption for your post" w="300px" backgroundColor="white"
-                            onChange={handleChange} />
-                        <Input type="text" name="image" value={post.image} placeholder="Upload image"
-                            backgroundColor="white"
-                            onChange={handleChange} />
-                        <Button backgroundColor="purple.100" onClick={handleSubmit}>Submit</Button>
-                    </VStack>
-                </Flex>
+            <Flex justifyContent="center" alignItems="center" h="80vh">
+                <Box
+                    h="55vh" w="55vh"
+                    borderWidth="1px"
+                    borderRadius="1vh"
+                >
+                    <Flex justify="center" p="1vh" borderBottom="1px" borderBottomColor="gray.200">
+                        <Text as="b" fontSize="3vh">Create a new post</Text>
+                    </Flex>
+                    <Flex justify="center" p="10vh">
+                        <VStack spacing="4vh">
+                            <Input w="45vh" type="file" accept='.jpg, .png, .jpeg' onChange={handleFileUpload} />
+                            <Input type="text" placeholder='Enter a caption' value={upload.caption}
+                                onChange={(e) => setUpload(prevState => ({
+                                    ...prevState,
+                                    caption: e.target.value
+                                }))} />
+                            <Button
+                                onClick={async () => {
+                                    await dispatch(createPosts(upload));
+                                    dispatch(resetHelpers());
+                                    setUpload(prevState => ({
+                                        ...prevState,
+                                        caption: "",
+                                        image: ""
+                                    }))
+                                    setUploadSuccess(true)
+                                }}>Upload</Button>
+                        </VStack>
+                    </Flex>
+                </Box>
             </Flex>
             <footer id="footer">
                 <Footer />
             </footer>
         </>
-    );
-};
+    )
+}
 
 export default AddPost

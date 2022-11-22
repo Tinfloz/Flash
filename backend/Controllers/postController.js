@@ -1,41 +1,42 @@
 import Posts from '../Models/postModel.js'
 import Users from '../Models/userModel.js';
 import mongoose from "mongoose";
+import cloudinary from "cloudinary"
 
 //upload posts
-const setPosts = async (req, res) => {
-    try {
-        const { image, caption } = req.body;
-        if (!image) {
-            throw "Kindly upload an image"
-        }
-        const userId = req.user._id;
-        const user = await Users.findById(userId)
-        const post = await Posts.create({
-            image,
-            caption,
-            userId
-        });
-        if (!post) {
-            throw "post could not be created";
-        } else {
-            res.status(201).json({
-                success: true,
-                message: "Post created",
-                post
-            });
-            user.posts.push(post._id);
-            await user.save();
-        }
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: "Post could not be created ",
-            error: error.errors?.[0]?.message || error
-        });
-    };
-};
+// const setPosts = async (req, res) => {
+//     try {
+//         const { image, caption } = req.body;
+//         if (!image) {
+//             throw "Kindly upload an image"
+//         }
+//         const userId = req.user._id;
+//         const user = await Users.findById(userId)
+//         const post = await Posts.create({
+//             image,
+//             caption,
+//             userId
+//         });
+//         if (!post) {
+//             throw "post could not be created";
+//         } else {
+//             res.status(201).json({
+//                 success: true,
+//                 message: "Post created",
+//                 post
+//             });
+//             user.posts.push(post._id);
+//             await user.save();
+//         }
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({
+//             success: false,
+//             message: "Post could not be created ",
+//             error: error.errors?.[0]?.message || error
+//         });
+//     };
+// };
 
 // like and unlike posts
 const likeUnlikePosts = async (req, res) => {
@@ -146,106 +147,48 @@ const getPosts = async (req, res) => {
 //update caption
 const updateCaption = async (req, res) => {
     try {
-        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            throw "invalid post ID"
-        };
-        const post = await Posts.findById(req.params.id);
-        if (!post) {
-            throw "Post not found"
-        };
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            throw "not valid"
+        }
+        const post = await Posts.findById(id);
+        if (!post) throw "post not found";
         if (post.userId.toString() !== req.user._id.toString()) {
-            throw "Not authorized to update caption"
-        } else {
-            const { caption } = req.body;
-            post.caption = caption;
-            await post.save();
-            res.status(200).json({
-                success: true,
-                message: "Caption updated"
-            });
-        };
+            throw "not authorized to update caption";
+        }
+        const { caption } = req.body;
+        if (!caption) {
+            throw "enter a caption to proceed";
+        }
+        post.caption = caption;
+        await post.save();
+        res.status(200).json({
+            success: true,
+            postId: post._id,
+            caption
+        });
     } catch (error) {
-        console.error(error);
-        if (error === "invalid post ID") {
+        if (error === "not valid") {
             res.status(500).json({
                 success: false,
                 error: error.errors?.[0]?.message || error
-            });
-        } else if (error === "Post not found") {
+
+            })
+        } else if (error === "post not found") {
             res.status(404).json({
                 success: false,
                 error: error.errors?.[0]?.message || error
-            });
-        } else {
-            res.status(403).json({
+
+            })
+        } else if (error === "enter a caption to proceed") {
+            res.status(404).json({
                 success: false,
                 error: error.errors?.[0]?.message || error
-            })
+
+            });
         };
     };
 };
-
-//add comments to posts
-// const addComment = async (req, res) => {
-//     try {
-//         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-//             throw "Invalid post ID"
-//         };
-//         const post = await Posts.findById(req.params.id)
-//         if (!post) {
-//             throw "Post not found"
-//         };
-//         const { comment } = req.body;
-//         if (!comment) {
-//             throw "Kindly upload a valid comment";
-//         };
-//         let commentExists = false;
-//         let index;
-//         for (let i of post.comments) {
-//             console.log("=====>", i)
-//             if (req.user._id.toString() === i.owner.toString()) {
-//                 commentExists = true;
-//                 index = post.comments.indexOf(i);
-//             };
-//         };
-//         if (commentExists) {
-//             post.comments[index].comment = comment;
-//             await post.save();
-//             res.status(200).json({
-//                 success: true,
-//                 message: "Comment has been updated"
-//             });
-//         } else {
-//             post.comments.push({
-//                 owner: req.user._id,
-//                 comment
-//             });
-//             await post.save();
-//             res.status(200).json({
-//                 success: true,
-//                 message: "Comment has been posted"
-//             });
-//         };
-//     } catch (error) {
-//         console.error(error);
-//         if (error === "Invalid post ID") {
-//             res.status(500).json({
-//                 success: false,
-//                 error: error.errors?.[0]?.message || error
-//             });
-//         } else if (error === "Post not found") {
-//             res.status(404).json({
-//                 success: false,
-//                 error: error.errors?.[0]?.message || error
-//             });
-//         } else {
-//             res.status(400).json({
-//                 success: false,
-//                 error: error.errors?.[0]?.message || error
-//             })
-//         };
-//     };
-// };
 
 //delete comment
 // const deleteComment = async (req, res) => {
@@ -515,6 +458,50 @@ const deleteComment = async (req, res) => {
             })
         } else if (error === "post not found") {
             res.status(404).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            });
+        };
+    };
+};
+
+
+const setPosts = async (req, res) => {
+    try {
+        const { image, caption } = req.body;
+        if (!image) {
+            throw "No image uploaded"
+        };
+        const user = await Users.findById(req.user._id)
+        const cloudResponse = await cloudinary.v2.uploader.upload(req.body.image, {
+            folder: "Flash App",
+        });
+        console.log(cloudResponse)
+        const post = await Posts.create({
+            image: {
+                publicId: cloudResponse.public_id,
+                url: cloudResponse.secure_url
+            },
+            caption,
+            userId: user._id
+        });
+        if (!post) {
+            throw "post could not be created"
+        }
+        user.posts.push(post._id);
+        await user.save();
+        res.status(201).json({
+            success: true,
+            message: "post has been created"
+        })
+    } catch (error) {
+        if (error === "No image uploaded") {
+            res.status(400).json({
+                success: false,
+                error: error.errors?.[0]?.message || error
+            })
+        } else if (error === "post could not be created" || error) {
+            res.status(500).json({
                 success: false,
                 error: error.errors?.[0]?.message || error
             });

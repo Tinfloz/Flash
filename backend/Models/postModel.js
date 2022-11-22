@@ -2,8 +2,14 @@ import mongoose from 'mongoose';
 
 const postSchema = mongoose.Schema({
     image: {
-        type: String,
-        required: true
+        // type: String,
+        // required: true
+        publicId: {
+            type: String
+        },
+        url: {
+            type: String
+        }
     },
     caption: {
         type: String,
