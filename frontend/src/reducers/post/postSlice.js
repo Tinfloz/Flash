@@ -146,9 +146,7 @@ const postSlice = createSlice({
     name: "post",
     initialState,
     reducers: {
-        reset: state => ({
-            ...initialState,
-        }),
+        reset: state => initialState,
         resetHelpers: state => ({
             ...initialState,
             user: state.user
@@ -173,7 +171,7 @@ const postSlice = createSlice({
             .addCase(getLoggedPosts.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.isSuccess = true;
-                state.user = { ...state.user, posts: action.payload.posts }
+                state.user = { ...state.user, posts: action.payload.posts, loggedInUser: action.payload.user }
             })
             .addCase(getLoggedPosts.rejected, (state, action) => {
                 state.user = {};
@@ -201,8 +199,10 @@ const postSlice = createSlice({
             .addCase(deletePost.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.isSuccess = true;
-                const newPosts = state.user.posts.filter(post => post._id !== action.payload.id);
-                const newUser = { ...state.user, posts: newPosts };
+                let newPosts = state.user.posts.filter(post => post._id !== action.payload.id);
+                let newPostsLogged = state.user.loggedInUser.posts.filter(post => post !== action.payload.id);
+                let newLoggedInUser = { ...state.user.loggedInUser, posts: newPostsLogged }
+                let newUser = { ...state.user, posts: newPosts, loggedInUser: newLoggedInUser };
                 state.user = newUser
             })
             .addCase(deletePost.rejected, (state, action) => {

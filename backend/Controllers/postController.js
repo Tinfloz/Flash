@@ -220,9 +220,6 @@ const updateCaption = async (req, res) => {
     };
 };
 
-
-
-
 // get all logged in user posts
 const getLoggedInPosts = async (req, res) => {
     try {
@@ -230,10 +227,12 @@ const getLoggedInPosts = async (req, res) => {
             userId: {
                 $in: req.user._id
             }
-        }).populate("userId");
+        }).populate("userId", "userName")
+        const user = await Users.findById(req.user._id).select("followers following userName posts")
         res.status(200).json({
             success: true,
-            posts
+            posts,
+            user
         });
     } catch (error) {
         console.log(error)

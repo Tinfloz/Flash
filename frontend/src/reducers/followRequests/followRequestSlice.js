@@ -71,9 +71,11 @@ const requestSlice = createSlice({
             .addCase(followAccept.pending, state => {
                 state.isLoading = true;
             })
-            .addCase(followAccept.fulfilled, state => {
+            .addCase(followAccept.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.isSuccess = true;
+                const newFollowRequests = state.followRequests.filter(req => req !== action.payload.name);
+                state.followRequests = newFollowRequests;
             })
             .addCase(followAccept.rejected, (state, action) => {
                 state.isLoading = false;
@@ -83,9 +85,11 @@ const requestSlice = createSlice({
             .addCase(followReject.pending, state => {
                 state.isLoading = true;
             })
-            .addCase(followReject.fulfilled, state => {
+            .addCase(followReject.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.isSuccess = true;
+                const newFollowRequests = state.followRequests.filter(req => req !== action.payload.name);
+                state.followRequests = newFollowRequests;
             })
             .addCase(followReject.rejected, (state, action) => {
                 state.isLoading = false;

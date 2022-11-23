@@ -5,20 +5,23 @@ import { followAndUnfollowUser, searchAndGetUserProfs, resetHelpers, reset } fro
 import Footer from '../components/Footer';
 import { useParams } from 'react-router-dom';
 import Post from '../components/Post';
+import { likeValidator } from '../helpers/likeValidator';
 
 const UserProfile = () => {
     const dispatch = useDispatch();
     const { name } = useParams();
     const { user } = useSelector(state => state.post);
+    const { auth } = useSelector(state => state.user)
 
     const [followButton, setFollowButton] = useState(null);
-    console.log("re-rendered")
+    console.log("re-rendered user profile")
 
     useEffect(() => {
         (async () => {
             await dispatch(searchAndGetUserProfs(name));
             dispatch(resetHelpers());
         })()
+        console.log("dispatch usefffevsbdj")
     }, [dispatch, name])
 
     useEffect(() => {
@@ -32,7 +35,9 @@ const UserProfile = () => {
                 return "Follow"
             }
         })
+        console.log("running user profile useEffct")
     }, [user, followButton])
+
 
     useEffect(() => {
         return () => (
@@ -56,7 +61,7 @@ const UserProfile = () => {
         );
     } else {
         if (user?.searchedUser?.visibility === "Public" ||
-            (user.searchedUser?.visibility === "Private" &&
+            (user?.searchedUser?.visibility === "Private" &&
                 user.searchedUser.followers.includes(user.loggedInUser))) {
             return (
                 <>
@@ -65,7 +70,7 @@ const UserProfile = () => {
                         <Grid templateColumns='repeat(3, 1fr)' gap={7} pt="10vh" pb="20vh" pl="7vh" pr="7vh">
                             {user.posts.map(post => (
                                 <GridItem display="flex" justify="center">
-                                    <Post my={false} post={post} key={post._id} />
+                                    <Post my={false} post={post} key={post._id} user={auth} liked={likeValidator(auth.sendUser._id, post.likes)} />
                                 </GridItem>
                             ))}
                         </Grid>

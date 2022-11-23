@@ -26,15 +26,36 @@ const setProfileVisibility = async (visibility, token) => {
         }
     };
     const response = await axios.post(API_URL + "visibility", visibility, config)
-    console.log("response====>", response)
     return response.data;
-}
+};
+
+const updateProfileDetails = async (token, updates) => {
+    const config = {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    };
+    const response = await axios.post(API_URL + "updateprofile", updates, config);
+    return response.data;
+};
+
+const updateUserPassword = async (token, updateDetails) => {
+    const config = {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    };
+    const response = await axios.post(API_URL + "updatepassword", updateDetails, config);
+    return response.data;
+};
 
 
 const userService = {
     registerUser,
     loginUser,
-    setProfileVisibility
+    setProfileVisibility,
+    updateProfileDetails,
+    updateUserPassword
 };
 
 export default userService;

@@ -19,7 +19,7 @@ const Notifications = () => {
             await dispatch(getFollowRequests());
             dispatch(resetHelpers());
         })()
-    }, [dispatch, JSON.stringify(followRequests)])
+    }, [dispatch])
 
     useEffect(() => {
         if (message === null) {

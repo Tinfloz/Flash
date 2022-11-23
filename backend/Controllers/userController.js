@@ -76,104 +76,79 @@ const loginUser = async (req, res) => {
 };
 
 // update password
+// const updatePassword = async (req, res) => {
+//     try {
+//         const user = await Users.findById(req.user._id);
+//         const { oldPassword, newPassword } = req.body;
+//         if (!oldPassword || !newPassword) {
+//             throw "Fields left blank";
+//         };
+//         if (!await user.matchPassword(oldPassword)) {
+//             throw "the passwords don't match";
+//         } else {
+//             user.password = newPassword;
+//             await user.save();
+//             res.status(200).json({
+//                 success: true,
+//                 message: "Password has been updated"
+//             });
+//         };
+//     } catch (error) {
+//         console.error(error);
+//         res.status(400).json({
+//             success: false,
+//             error: error.errors?.[0]?.message || error
+//         });
+//     };
+// };
+
 const updatePassword = async (req, res) => {
     try {
+        const { oldPassword, newPassword, confirmNewPassword } = req.body;
+        if (!oldPassword || !newPassword || !confirmNewPassword) {
+            throw "enter all fields"
+        };
         const user = await Users.findById(req.user._id);
-        const { oldPassword, newPassword } = req.body;
-        if (!oldPassword || !newPassword) {
-            throw "Fields left blank";
+        if (! await user.matchPassword(oldPassword)) {
+            throw "old passwords don't match"
         };
-        if (!await user.matchPassword(oldPassword)) {
-            throw "the passwords don't match";
-        } else {
-            user.password = newPassword;
-            await user.save();
-            res.status(200).json({
-                success: true,
-                message: "Password has been updated"
-            });
+        if (newPassword !== confirmNewPassword) {
+            throw "new passwords don't match"
         };
+        user.password = newPassword;
+        await user.save();
+        res.status(200).json({
+            success: true,
+            message: "password updated"
+        })
     } catch (error) {
-        console.error(error);
         res.status(400).json({
-            success: false,
+            succes: false,
             error: error.errors?.[0]?.message || error
         });
     };
 };
 
-// update user profile
+
+// update profiles
 const updateProfile = async (req, res) => {
     try {
+        const { userName, email } = req.body;
         const user = await Users.findById(req.user._id);
-        const { email, userName } = req.body;
-        user.email = email || user.email;
         user.userName = userName || user.userName;
-        const updatedUser = await user.save();
-        if (!updatedUser) {
-            throw "User could not be updated"
-        }
+        user.email = email || user.email;
+        await user.save();
         res.status(200).json({
             success: true,
-            message: "User profile updated"
-        });
+            message: "details updated"
+        })
     } catch (error) {
-        console.error(error);
         res.status(500).json({
             success: false,
             error: error.errors?.[0]?.message || error
         });
     };
 };
-
-// follow and unfollow user
-// const followUnfollow = async (req, res) => {
-//     try {
-//         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-//             throw "invalid user ID";
-//         };
-//         const user = await Users.findById(req.user._id);
-//         const followUser = await Users.findById(req.params.id);
-//         if (!followUser) {
-//             throw "user not found";
-//         };
-//         if (user.following.includes(req.params.id)) {
-//             const indexOfFollowing = user.following.indexOf(req.params.id);
-//             const indexOfFollower = followUser.followers.indexOf(req.user._id);
-//             user.following.splice(indexOfFollowing, 1);
-//             followUser.followers.splice(indexOfFollower, 1);
-//             await user.save();
-//             await followUser.save();
-//             res.status(200).json({
-//                 success: true,
-//                 message: "User unfollowed"
-//             });
-//         } else {
-//             user.following.push(req.params.id);
-//             followUser.followers.push(req.user._id)
-//             await user.save();
-//             await followUser.save();
-//             res.status(200).json({
-//                 success: true,
-//                 message: "User followed"
-//             });
-//         }
-//     } catch (error) {
-//         console.error(error);
-//         if (error === "invalid post ID") {
-//             res.status(400).json({
-//                 success: false,
-//                 error: error.errors?.[0]?.message || error
-//             });
-//         } else {
-//             res.status(404).json({
-//                 success: false,
-//                 error: error.errors?.[0]?.message || error
-//             });
-
-//         };
-//     };
-// };
 
 // delete user profile
 const deleteProfile = async (req, res) => {
@@ -610,7 +585,6 @@ export {
     rejectRequest,
     getFollowRequests
 };
-
 
 
 

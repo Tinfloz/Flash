@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Avatar, HStack, Text, Image, Box, Flex, IconButton, useToast, VStack, Input } from "@chakra-ui/react";
+import { Avatar, HStack, Text, Image, Box, Flex, IconButton, useToast, VStack, Input, Spacer, Tooltip } from "@chakra-ui/react";
 import { AiFillHeart, AiFillDelete } from "react-icons/ai";
 import { FaRegComment } from "react-icons/fa";
-import { deletePost, resetHelpers, likeAndUnlikePosts, addComments, editComments, deleteComments } from '../reducers/post/postSlice';
+import {
+    deletePost, resetHelpers, likeAndUnlikePosts,
+    addComments, editComments, deleteComments, updateCaptionPost
+} from '../reducers/post/postSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import {
     Modal,
@@ -15,16 +18,18 @@ import {
     useDisclosure,
     Button
 } from '@chakra-ui/react';
+import { BiDotsVerticalRounded } from "react-icons/bi";
 
-const Post = ({ my, post, user }) => {
+const Post = ({ my, post, user, liked }) => {
 
     const dispatch = useDispatch();
     const toast = useToast();
     const { isOpen: isFirstOpen, onClose: onFirstClose, onOpen: onFirstOpen } = useDisclosure();
     const { isOpen: isSecondOpen, onClose: onSecondClose, onOpen: onSecondOpen } = useDisclosure();
     const { isOpen: isThirdOpen, onClose: onThirdClose, onOpen: onThirdOpen } = useDisclosure();
+    const { isOpen: isFourthOpen, onClose: onFourthClose, onOpen: onFourthOpen } = useDisclosure();
 
-    const [liked, setLiked] = useState(false);
+    // const [liked, setLiked] = useState(false);
     const [deleted, setDeleted] = useState(false);
     const [newComment, setNewComment] = useState({
         comment: ""
@@ -32,8 +37,13 @@ const Post = ({ my, post, user }) => {
     const [editComment, setEditComment] = useState({
         newComment: ""
     });
+    const [caption, setCaption] = useState({
+        caption: ""
+    })
 
     const [id, setId] = useState(0);
+
+    console.log("rendered post", post._id)
 
     const handleEditClick = (id) => {
         setId(id);
@@ -63,7 +73,7 @@ const Post = ({ my, post, user }) => {
     };
 
     const handleLike = async () => {
-        setLiked(!liked)
+        // setLiked(!liked)
         await dispatch(likeAndUnlikePosts(post._id));
         dispatch(resetHelpers())
     };
@@ -100,9 +110,56 @@ const Post = ({ my, post, user }) => {
                         <Avatar name={post.userId.userName} src="https://bit.ly/dan-abramov" ml="1rem" />
                         <Text as="b">{post.userId.userName}</Text>
                     </HStack>
+                    <Spacer />
+                    {my ?
+                        (
+                            <>
+                                <Tooltip hasArrow label='Edit caption' bg='gray.300' color='black'>
+                                    <IconButton
+                                        icon={<BiDotsVerticalRounded />}
+                                        bg="azure"
+                                        _hover={{ bg: "azure" }}
+                                        onClick={onFourthOpen}
+                                    />
+                                </Tooltip>
+                                <Modal isOpen={isFourthOpen} onClose={onFourthClose}>
+                                    <ModalOverlay />
+                                    <ModalContent>
+                                        <ModalHeader>Edit caption</ModalHeader>
+                                        <ModalCloseButton />
+                                        <ModalBody>
+                                            <HStack>
+                                                <Input placeholder="Enter new caption" value={caption.caption}
+                                                    onChange={(e) =>
+                                                        setCaption(prevState => ({
+                                                            ...prevState,
+                                                            caption: e.target.value
+                                                        }))
+                                                    } />
+                                                <Button onClick={async () => {
+                                                    let newCaptionDetails = {
+                                                        postId: post._id,
+                                                        caption
+                                                    };
+                                                    await dispatch(updateCaptionPost(newCaptionDetails));
+                                                    dispatch(resetHelpers())
+                                                    setCaption(prevState => ({
+                                                        ...prevState,
+                                                        caption: ""
+                                                    }))
+                                                    onFourthClose();
+                                                }}>Submit</Button>
+                                            </HStack>
+                                        </ModalBody>
+                                    </ModalContent>
+                                </Modal>
+                            </>) :
+                        (
+                            null
+                        )}
                 </Flex>
                 <Box minH={"20rem"} display="flex" alignItems="center" justifyContent="center" bg="white">
-                    <Image src={post.image} overflow="hidden" />
+                    <Image src={post.image.url} overflow="hidden" />
                 </Box>
                 <Flex justify="center" mt="2vh">
                     <HStack spacing="25vh" w="95%">
