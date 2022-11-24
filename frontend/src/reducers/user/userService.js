@@ -49,13 +49,24 @@ const updateUserPassword = async (token, updateDetails) => {
     return response.data;
 };
 
+const getResetLink = async (email) => {
+    const response = await axios.post(API_URL + "/forget/password", email);
+    return response.data;
+};
+
+const passwordReset = async (resetToken, resetPasswordDetails) => {
+    const response = await axios.post(API_URL + `/reset/password/${resetToken}`, resetPasswordDetails);
+    return response.data;
+};
 
 const userService = {
     registerUser,
     loginUser,
     setProfileVisibility,
     updateProfileDetails,
-    updateUserPassword
+    updateUserPassword,
+    getResetLink,
+    passwordReset
 };
 
 export default userService;

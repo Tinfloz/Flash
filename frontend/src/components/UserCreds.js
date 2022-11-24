@@ -6,8 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import { BiShow, BiHide } from "react-icons/bi";
 import { IconButton } from '@chakra-ui/react';
 
-
-
 const UserCreds = ({ first }) => {
 
     const dispatch = useDispatch();
@@ -78,7 +76,14 @@ const UserCreds = ({ first }) => {
                         onClick={handleSubmit}>Submit</Button>
                     {first ? (
                         <Text as="button" color="gray.400" onClick={() => navigate("/login")}>Already registered? Login</Text>
-                    ) : (<Text as="button" color="gray.400" onClick={() => navigate("/register")}>Not a user? Sign up!</Text>)}
+                    ) : (
+                        <>
+                            <Text as="button" color="gray.400"
+                                onClick={() => navigate("/register")}>Not a user? Sign up!</Text>
+                            <Text as="button" color="gray.400"
+                                onClick={() => navigate("/password/reset")}
+                            >Forgot Password? Reset!</Text>
+                        </>)}
                 </VStack>
             </Box>
         </>

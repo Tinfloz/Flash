@@ -65,6 +65,27 @@ export const passwordUpdate = createAsyncThunk("user/password/update", async (up
     }
 });
 
+export const generateResetLink = createAsyncThunk("user/reset", async (email, thunkAPI) => {
+    try {
+        return await userService.getResetLink(email)
+    } catch (error) {
+        const message = (error.response && error.response.data && error.response.data.message)
+            || error.message || error.toString();
+        return thunkAPI.rejectWithValue(message)
+    }
+});
+
+export const resetUserPassword = createAsyncThunk("user/reset/password", async (resetDetails, thunkAPI) => {
+    try {
+        const { resetToken, resetPassword } = resetDetails;
+        return await userService.passwordReset(resetToken, resetPassword);
+    } catch (error) {
+        const message = (error.response && error.response.data && error.response.data.message)
+            || error.message || error.toString();
+        return thunkAPI.rejectWithValue(message)
+    }
+});
+
 const userSlice = createSlice({
     name: "user",
     initialState,
@@ -74,8 +95,9 @@ const userSlice = createSlice({
             ...initialState,
             user: state.user
         }),
-        logout: () => {
-            localStorage.removeItem("user")
+        logout: state => {
+            localStorage.removeItem("user");
+            reset()
         }
     },
     extraReducers: builder => {
@@ -143,6 +165,32 @@ const userSlice = createSlice({
                 state.message = action.payload.message;
             })
             .addCase(passwordUpdate.rejected, (state, action) => {
+                state.isLoading = false;
+                state.isError = true;
+                state.message = action.payload;
+            })
+            .addCase(generateResetLink.pending, state => {
+                state.isLoading = true;
+            })
+            .addCase(generateResetLink.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.isSuccess = true;
+                state.message = action.payload.message
+            })
+            .addCase(generateResetLink.rejected, (state, action) => {
+                state.isLoading = false;
+                state.isError = true;
+                state.message = action.payload;
+            })
+            .addCase(resetUserPassword.pending, state => {
+                state.isLoading = true;
+            })
+            .addCase(resetUserPassword.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.isSuccess = true;
+                state.message = action.payload.message;
+            })
+            .addCase(resetUserPassword.rejected, (state, action) => {
                 state.isLoading = false;
                 state.isError = true;
                 state.message = action.payload;

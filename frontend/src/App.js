@@ -29,6 +29,8 @@ import Notifications from "./pages/Notifications";
 import TestUp from "./pages/TestUp";
 import Update from "./pages/Update";
 import UpdatePassword from "./pages/UpdatePassword";
+import ResetPassword from "./pages/ResetPassword";
+import SetNewPassword from "./pages/SetNewPassword";
 // import { ColorModeSwitcher } from './ColorModeSwitcher';
 // import { Logo } from './Logo';
 {/* <ChakraProvider theme={theme}>
@@ -56,6 +58,8 @@ function App() {
           <Route path="/testup" element={<TestUp />} />
           <Route path="/update/:name" element={<Update />} />
           <Route path="/update/password" element={<UpdatePassword />} />
+          <Route path="/password/reset" element={<ResetPassword />} />
+          <Route path="/reset/password/:resetToken" element={<SetNewPassword />} />
           <Route path='/' element={<Feed feed={true} />} />
         </Routes>
       </div>
