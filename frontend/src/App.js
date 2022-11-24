@@ -26,7 +26,6 @@ import Search from "./pages/Search";
 import UserProfile from "./pages/UserProfile";
 import SetProfileVisibility from "./pages/SetProfileVisibility";
 import Notifications from "./pages/Notifications";
-import TestUp from "./pages/TestUp";
 import Update from "./pages/Update";
 import UpdatePassword from "./pages/UpdatePassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -55,7 +54,6 @@ function App() {
           <Route path="/user/:name" element={<UserProfile />} />
           <Route path="/set/visibility" element={<SetProfileVisibility />} />
           <Route path="/notifications" element={<Notifications />} />
-          <Route path="/testup" element={<TestUp />} />
           <Route path="/update/:name" element={<Update />} />
           <Route path="/update/password" element={<UpdatePassword />} />
           <Route path="/password/reset" element={<ResetPassword />} />

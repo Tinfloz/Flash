@@ -1,8 +1,10 @@
-import { Box, Button, Flex, Text, VStack, Input, useToast } from '@chakra-ui/react';
+import { Box, Button, Flex, Text, VStack, Input, useToast, HStack } from '@chakra-ui/react';
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { resetHelpers, resetUserPassword } from '../reducers/user/userSlice';
+import { BiShow, BiHide } from "react-icons/bi";
+import { IconButton } from '@chakra-ui/react';
 
 const SetNewPassword = () => {
 
@@ -16,7 +18,8 @@ const SetNewPassword = () => {
         newPassword: "",
         confirmNewPassword: ""
     });
-
+    const [id, setId] = useState(null);
+    const [show, setShow] = useState(false)
     const handleChange = (e) => {
         setResetPassword(prevState => ({
             ...prevState,
@@ -74,7 +77,7 @@ const SetNewPassword = () => {
                         <VStack spacing="2vh">
                             <Text as="b" fontSize="3vh"> Enter new password</Text>
                             <Input placeholder="Enter new password"
-                                type="password"
+                                type={id === 1 && show ? "text" : "password"}
                                 value={resetPassword.newPassword} name="newPassword"
                                 onChange={handleChange}
                             />
