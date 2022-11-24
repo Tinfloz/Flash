@@ -12,7 +12,7 @@ router.route('/updateprofile').post(protect, updateProfile);
 router.route('/deleteprofile').delete(protect, deleteProfile);
 router.route('/myprofile').get(protect, myProfile);
 router.route("/forget/password").post(forgetPassword);
-router.route("/password/reset/:token").put(resetPassword);
+router.route("/password/reset/:token").post(resetPassword);
 router.route("/").get(protect, getSearchedUser);
 router.route("/visibility").post(protect, setVisibility);
 router.route("/:name/accept").get(protect, acceptRequest);

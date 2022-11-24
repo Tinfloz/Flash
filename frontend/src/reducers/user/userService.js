@@ -55,7 +55,7 @@ const getResetLink = async (email) => {
 };
 
 const passwordReset = async (resetToken, resetPasswordDetails) => {
-    const response = await axios.post(API_URL + `/reset/password/${resetToken}`, resetPasswordDetails);
+    const response = await axios.post(API_URL + `password/reset/${resetToken}`, resetPasswordDetails);
     return response.data;
 };
 

@@ -176,65 +176,6 @@ const myProfile = async (req, res) => {
     };
 };
 
-// get user profile
-// const followUnfollow = async (req, res) => {
-//     try {
-//         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-//             throw "user id invalid"
-//         };
-//         const toBeFollowed = await Users.findById(req.params.id);
-//         if (!toBeFollowed) {
-//             throw "user not found"
-//         };
-//         const user = await Users.findById(req.user._id);
-//         if (req.user._id.toString() === req.params.id.toString()) {
-//             throw "you cannot follow yourself"
-//         };
-//         if (toBeFollowed.followers.includes(req.user._id)) {
-//             const indexUser = toBeFollowed.followers.indexOf(req.user._id);
-//             const indexToBeFollowed = user.following.indexOf(req.params.id);
-//             toBeFollowed.followers.splice(indexUser, 1);
-//             user.following.splice(indexToBeFollowed, 1)
-//             await toBeFollowed.save();
-//             await user.save();
-//             res.status(200).json({
-//                 success: true,
-//                 message: "user unfollowed",
-//                 userId: user._id
-//             });
-//         } else {
-//             toBeFollowed.followers.push(req.user._id);
-//             user.following.push(req.params.id);
-//             await toBeFollowed.save();
-//             await user.save();
-//             res.status(200).json({
-//                 success: true,
-//                 message: "user followed",
-//                 userId: user._id
-//             })
-//         }
-//     } catch (error) {
-//         console.log(error);
-//         if (error === "user id invalid") {
-//             res.status(400).json({
-//                 success: false,
-//                 error: error.errors?.[0]?.message || error
-//             })
-//         } else if (error === "user not found") {
-//             res.status(404).json({
-//                 success: false,
-//                 error: error.errors?.[0]?.message || error
-//             })
-//         } else {
-//             res.status(400).json({
-//                 success: false,
-//                 error: error.errors?.[0]?.message || error
-//             });
-//         };
-//     };
-// };
-
-
 // generate reset link
 const forgetPassword = async (req, res) => {
     try {
@@ -247,7 +188,7 @@ const forgetPassword = async (req, res) => {
         };
         let resetToken = user.getResetPasswordToken();
         await user.save();
-        const resetLink = `${req.protocol}://${req.get("origin")}/reset/password/${resetToken}`;
+        const resetLink = `${req.get("origin")}/reset/password/${resetToken}`;
         let emailToSend = `To reset your password, click on this link: ${resetLink}`
         try {
             await sendEmail({
@@ -284,50 +225,12 @@ const forgetPassword = async (req, res) => {
 };
 
 // get new password
-// const resetPassword = async (req, res) => {
-//     try {
-//         const token = req.params.token;
-//         const resetTokenHashed = crypto.createHash("sha256").update(token).digest("hex");
-//         const user = await Users.findOne({
-//             resetPasswordToken: resetTokenHashed,
-//             resetPasswordTokenExpires: { $gt: Date.now() }
-//         });
-//         if (!user) {
-//             throw "Invalid token or expired token";
-//         };
-//         const { newPassword } = req.body;
-//         if (!newPassword) {
-//             throw "Field left blank";
-//         };
-//         user.password = newPassword;
-//         user.resetPasswordToken = undefined;
-//         user.resetPasswordTokenExpires = undefined;
-//         await user.save();
-//         res.status(200).json({
-//             success: true,
-//             message: "password has been reset"
-//         });
-//     } catch (error) {
-//         console.error(error);
-//         if (error === "Invalid token or expired token") {
-//             res.status(401).json({
-//                 success: false,
-//                 error: error.errors?.[0]?.message || error
-//             });
-//         } else if (error === "Field left blank") {
-//             res.status(400).json({
-//                 success: false,
-//                 error: error.errors?.[0]?.message || error
-//             });
-//         };
-//     };
-// };
-
 const resetPassword = async (req, res) => {
     try {
         const { token } = req.params;
+        console.log(token)
         const resetPasswordToken = crypto.createHash("sha256").update(token).digest("hex");
-        const user = await Users.find({
+        const user = await Users.findOne({
             resetPasswordToken,
             resetPasswordTokenExpires: {
                 $gt: Date.now()
@@ -344,7 +247,10 @@ const resetPassword = async (req, res) => {
             throw "passwords don't match"
         };
         user.password = newPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordTokenExpires = undefined;
         await user.save();
+        console.log(user)
         res.status(200).json({
             success: true,
             message: "successfully reset password"
@@ -352,12 +258,12 @@ const resetPassword = async (req, res) => {
     } catch (error) {
         if (error === "invalid token or token expired" || "passwords don't match" || "fill all fields") {
             res.status(400).json({
-                success: true,
+                success: false,
                 error: error.errors?.[0]?.message || error
             })
         } else {
             res.status(500).json({
-                success: true,
+                success: false,
                 error: error.errors?.[0]?.message || error
             });
         };
